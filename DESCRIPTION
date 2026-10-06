@@ -3,7 +3,7 @@ Title: Patch-Aware Ancestral State Reconstruction for Branch-Localized Shifts
 Version: 0.0.0.9000
 Authors@R:
     person(
-      given = "Yuki",
+      given = "Yuqi",
       family = "Cheng",
       email = "dreabder@gmail.com",
       role = c("aut", "cre")

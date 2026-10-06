@@ -5,3 +5,16 @@
 .DS_Store
 *.tar.gz
 *.Rcheck
+
+cat >> .gitignore <<'EOF'
+
+# Development-generated outputs
+dev/**/*.log
+dev/**/*_output.txt
+dev/**/*_audit.txt
+dev/**/*_nodewise.csv
+dev/**/*_summary.csv
+
+# Local development backups
+R/*.before_*
+EOF
