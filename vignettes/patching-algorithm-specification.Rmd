@@ -645,17 +645,52 @@ into this standardized representation.
 
 ### 8.2 ASR adapters
 
-Functions from external phylogenetic packages are not required to natively satisfy the standardized `asr_fun` contract.
+Functions from external phylogenetic packages are not required to
+natively satisfy the standardized `asr_fun` contract.
 
-Instead, method-specific adapter functions may be used to:
+Instead, method-specific adapter functions are responsible for:
 
-1. call the external ASR implementation;
-2. extract its internal-node estimates;
-3. map method-specific or local node identifiers to the stable node identities used by `phyloPatch`;
-4. validate the resulting estimate vector;
-5. return the standardized named numeric vector required by the patching algorithm.
+1. calling the external ASR implementation;
+2. extracting its internal-node estimates;
+3. mapping method-specific or local node identifiers to the stable node
+   identities used by `phyloPatch`;
+4. validating the resulting estimate vector; and
+5. returning the standardized named numeric vector required by the
+   patching algorithm.
 
-This separation allows the patching procedure to remain independent of any particular ASR implementation.
+The current implementation provides five built-in ASR interfaces:
+
+- `asr_ape_pic()`, which uses PIC-style reconstruction through
+  `ape::ace(method = "pic")`;
+- `asr_ape_ml_bm()`, which uses maximum-likelihood reconstruction under
+  a Brownian-motion model through
+  `ape::ace(method = "ML", model = "BM")`;
+- `asr_ape_gls_bm()`, which uses generalized least-squares
+  reconstruction under a Brownian covariance model;
+- `make_asr_rphylopars_bm()`, which constructs a Brownian-motion backend
+  based on `Rphylopars::phylopars()`; and
+- `make_asr_phytools_bayes()`, which constructs a Bayesian backend based
+  on `phytools::anc.Bayes()`.
+
+The `ape` package is a required package dependency. `Rphylopars` and
+`phytools` are optional dependencies and are required only when their
+corresponding adapters are used.
+
+Built-in adapters use explicit node-identity validation. They do not use
+positional fallback when reconstructed node identities cannot be mapped
+unambiguously, and they do not silently substitute a different ASR
+method when the requested method fails.
+
+The Bayesian adapter derives a deterministic random seed from the user
+supplied base seed and the stable identity of each phylogenetic
+component. Consequently, repeated analyses with the same input and base
+seed are reproducible, while changing the order of compatible shift
+rows does not change the random-number stream assigned to a biological
+component.
+
+This separation allows the patching procedure to remain independent of
+any particular ASR implementation while enforcing a common
+component-level input and output contract.
 
 
 ### 8.3 Component-level reconstruction
@@ -1128,7 +1163,7 @@ The current implementation does not support:
 - non-finite terminal trait values;
 - trait vectors containing unknown or duplicated terminal identifiers.
 
-These restrictions define the validated input domain of the initial
+These restrictions define the validated input domain of the current
 implementation and may be relaxed in future versions only after the
 corresponding algorithmic behavior has been formally defined and tested.
 
@@ -1146,7 +1181,21 @@ The current implementation does not support:
 For multiple shifts, descendant patch components must therefore remain
 pairwise disjoint under the compatibility rule defined in Section 4.
 
-### 12.3 Failure behavior
+### 12.3 Backend-specific limitations
+
+The applicability of an ASR backend can be narrower than the validated
+input domain of the core patching algorithm.
+
+In particular, the current `make_asr_phytools_bayes()` adapter does not
+support a component containing only one internal node because
+`phytools::anc.Bayes()` does not provide a usable reconstruction for
+that component configuration. Such a component therefore produces an
+explicit error when this backend is requested.
+
+Backend-specific failures are not replaced silently by estimates from a
+different reconstruction method.
+
+### 12.4 Failure behavior
 
 Unsupported or internally inconsistent configurations must produce an
 informative error before incomplete patched ancestral-state estimates are

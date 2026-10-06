@@ -18,3 +18,5 @@ dev/**/*_summary.csv
 # Local development backups
 R/*.before_*
 EOF
+/doc/
+/Meta/

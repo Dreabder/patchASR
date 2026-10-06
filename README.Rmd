@@ -75,9 +75,13 @@ The current implementation supports:
 - one or more compatible shift edges; and
 - multiple shifts whose descendant patch sets are pairwise disjoint.
 
-The shift parent must be an internal node and cannot be the root.
+The shift parent must be an internal node and cannot be the root. Each
+shift parent may define at most one patch region.
 
-Nested or overlapping patch regions are not currently supported.
+For multiple shifts, descendant patch-tip sets must be pairwise
+disjoint. Nested or overlapping patch regions are not currently
+supported and are rejected explicitly rather than resolved
+heuristically.
 
 ## Ancestral-state reconstruction backend
 
@@ -105,6 +109,37 @@ identifiers supplied in `tree$node.label`.
 This interface allows different ancestral-state reconstruction methods
 to be connected to the same patching framework through method-specific
 adapters.
+
+### Built-in ASR backends
+
+`phyloPatch` currently provides five built-in ancestral-state
+reconstruction interfaces:
+
+- `asr_ape_pic()` performs PIC-style reconstruction using
+  `ape::ace(method = "pic")`;
+- `asr_ape_ml_bm()` performs maximum-likelihood reconstruction under a
+  Brownian-motion model using `ape::ace(method = "ML", model = "BM")`;
+- `asr_ape_gls_bm()` performs generalized least-squares reconstruction
+  under a Brownian covariance model;
+- `make_asr_rphylopars_bm()` creates a Brownian-motion reconstruction
+  backend based on `Rphylopars::phylopars()`; and
+- `make_asr_phytools_bayes()` creates a Bayesian reconstruction backend
+  based on `phytools::anc.Bayes()`.
+
+The first three backends use the required dependency `ape`.
+`Rphylopars` and `phytools` are optional dependencies and are required
+only when their corresponding backends are used.
+
+All built-in backends enforce explicit internal-node identity mapping.
+They do not silently substitute a different reconstruction method if the
+requested method fails or if reconstructed node identities cannot be
+mapped unambiguously.
+
+The Bayesian backend uses deterministic component-specific random seeds.
+With the same input and base seed, repeated analyses are reproducible,
+and compatible multiple-shift analyses are invariant to the row order of
+the supplied shift table. The current `phytools::anc.Bayes()` adapter
+does not support components containing only one internal node.
 
 ## Development installation
 
@@ -220,6 +255,76 @@ patch_1
 boundary
 ```
 
+### Using the built-in backends
+
+For example, Brownian-motion maximum-likelihood reconstruction can be
+used directly as the component-level ASR backend:
+
+```{r built-in-ml-example, eval=FALSE}
+fit_ml <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = asr_ape_ml_bm
+)
+```
+
+PIC-style and GLS-BM reconstruction can be supplied in the same way:
+
+```{r other-ape-backends, eval=FALSE}
+fit_pic <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = asr_ape_pic
+)
+
+fit_gls <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = asr_ape_gls_bm
+)
+```
+
+Backends requiring additional configuration are created first and then
+passed to `patch_asr()`. For example:
+
+```{r rphylopars-backend, eval=FALSE}
+rph_backend <- make_asr_rphylopars_bm(
+  REML = TRUE
+)
+
+fit_rph <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = rph_backend
+)
+```
+
+A Bayesian backend can be constructed similarly:
+
+```{r bayesian-backend, eval=FALSE}
+bayes_backend <- make_asr_phytools_bayes(
+  ngen = 10000L,
+  sample_freq = 100L,
+  burnin_frac = 0.20,
+  seed = 123L
+)
+
+fit_bayes <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = bayes_backend
+)
+```
+
+The MCMC settings above illustrate the software interface only. Users
+should choose MCMC settings and assess convergence as appropriate for
+their own scientific analysis.
+
 ## Shift-edge specification
 
 Shift edges are supplied as a data frame containing two columns:
@@ -307,11 +412,21 @@ This separation makes it possible to evaluate the patching framework
 with different reconstruction methods without changing the core
 partitioning algorithm.
 
+The package treats reconstruction backends as explicit computational
+components rather than interchangeable fallbacks. If a requested
+backend cannot return a complete, finite, and unambiguously identified
+set of internal-node estimates, the analysis stops with an error instead
+of silently switching to another reconstruction method.
+
+StableTraits or StableTrait-based reconstruction is not part of the
+patching algorithm implemented by `phyloPatch`; such methods may instead
+be used externally as comparison or benchmark methods.
+
 ## Development status
 
-The package is currently under active development.
+`phyloPatch` is currently distributed as a development version.
 
-The current implementation has automated tests covering:
+The automated test suite covers:
 
 - input validation;
 - stable node identity;
@@ -320,7 +435,31 @@ The current implementation has automated tests covering:
 - multiple compatible shifts;
 - tree partitioning;
 - component-wise reconstruction;
-- boundary reconstruction;
-- coupled boundary systems;
-- result merging; and
+- single and coupled boundary reconstruction;
+- result merging;
+- built-in ASR adapters;
+- Bayesian random-number-state preservation and reproducibility;
+- multiple-shift row-order invariance; and
 - the public `patch_asr()` interface.
+
+Development-level numerical regression tests have additionally compared
+the refactored package implementation with the original research
+implementation for deterministic PIC, ML-BM, GLS-BM, and
+Rphylopars-BM reconstruction on a 128-tip simulation case. All four
+methods reproduced the original patched ancestral-state estimates within
+the prespecified numerical tolerance.
+
+The Bayesian adapter has also been validated against direct
+`phytools::anc.Bayes()` output using the same component-specific random
+seeds, burn-in handling, internal-node mapping, and posterior-mean
+calculation. In the validation case, adapter and direct calculations
+were identical at every reconstructed node.
+
+For a controlled two-shift test case, reversing the row order of the
+shift table produced identical final estimates for PIC, ML-BM, GLS-BM,
+Rphylopars-BM, and Bayesian reconstruction.
+
+These checks are software-validation tests and should not be interpreted
+as general biological-performance benchmarks or as substitutes for
+method-specific statistical diagnostics such as MCMC convergence
+assessment.
