@@ -17,6 +17,8 @@ Description: Implements patch-aware ancestral state reconstruction for
     branch lengths from the original phylogeny, after which component and
     boundary estimates are merged back onto the internal nodes of the
     original tree while preserving node identity and estimate provenance.
+URL: https://github.com/Dreabder/phyloPatch
+BugReports: https://github.com/Dreabder/phyloPatch/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

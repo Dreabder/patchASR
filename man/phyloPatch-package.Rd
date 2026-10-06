@@ -102,6 +102,14 @@ estimate and the component from which it was obtained.
 See \code{\link[=patch_asr]{patch_asr()}} for the primary user interface.
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/Dreabder/phyloPatch}
+  \item Report bugs at \url{https://github.com/Dreabder/phyloPatch/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Yuqi Cheng \email{dreabder@gmail.com}
 
