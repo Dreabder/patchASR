@@ -373,7 +373,7 @@ validate_shifts <- function(
 
   if (any(parent == root)) {
     stop(
-      "The root cannot serve as a shift parent in version 0.1.",
+      "The root cannot serve as a shift parent in the current implementation.",
       call. = FALSE
     )
   }
@@ -413,7 +413,7 @@ validate_shifts <- function(
 
   if (anyDuplicated(parent)) {
     stop(
-      "Multiple requested shifts cannot share the same parent in version 0.1.",
+      "Multiple requested shifts cannot share the same parent in the current implementation.",
       call. = FALSE
     )
   }
@@ -449,7 +449,7 @@ validate_shifts <- function(
           stop(
             "Requested patch clades must be pairwise disjoint; ",
             "nested or overlapping patch clades are not supported ",
-            "in version 0.1.",
+            "in the current implementation.",
             call. = FALSE
           )
         }

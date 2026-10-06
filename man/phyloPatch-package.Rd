@@ -103,7 +103,7 @@ See \code{\link[=patch_asr]{patch_asr()}} for the primary user interface.
 }
 
 \author{
-\strong{Maintainer}: Yuki Cheng \email{dreabder@gmail.com}
+\strong{Maintainer}: Yuqi Cheng \email{dreabder@gmail.com}
 
 }
 \keyword{internal}

@@ -88,7 +88,7 @@ nodes internally within the patching algorithm.
 The names of `states` must correspond exactly to the terminal labels in
 `tree$tip.label`.
 
-For version 0.1, every terminal taxon must have one finite observed
+In the current implementation, every terminal taxon must have one finite observed
 continuous trait value.
 
 The algorithm must verify that:
@@ -121,7 +121,7 @@ Conceptually, the biological interpretation is:
 | 2 | I2 | J2 |
 | ... | ... | ... |
 
-For version 0.1, `parent` and `child` are specified using the `ape` node
+In the current implementation, `parent` and `child` are specified using the `ape` node
 numbers of the original `phylo` object supplied in `tree`.
 
 Thus, every row of `shifts` identifies an existing directed edge by the
@@ -257,7 +257,7 @@ The following conditions must hold:
 3.  each shift parent must be an internal node;
 4.  every shift child must be a direct child of its specified parent;
 5.  each boundary parent must be associated with only one requested
-    shift edge in version 0.1;
+    shift edge in the current implementation;
 6.  all shift edges must satisfy the multiple-shift compatibility rule
     defined below;
 7.  each shift parent $I_k$ must itself have a parent node $H_k$;
@@ -269,7 +269,7 @@ The following conditions must hold:
 For a shift whose child node is $J_k$, let $D(J_k)$ denote the complete
 descendant node set rooted at $J_k$, including $J_k$ itself.
 
-For version 0.1, multiple shifts are supported only when their
+In the current implementation, multiple shifts are supported only when their
 descendant patches are pairwise disjoint:
 
 $$
@@ -281,11 +281,11 @@ for every pair $a \ne b$.
 This condition prevents one requested patch from being nested within
 another requested patch.
 
-Nested patch configurations are therefore not supported in version 0.1.
+Nested patch configurations are therefore not supported in the current implementation.
 
-### 4.2 Version 0.1 design decisions
+### 4.2 Current implementation design decisions
 
-| Question                              | Version 0.1 decision   |
+| Question                              | Current implementation   |
 |---------------------------------------|------------------------|
 | Rooted tree required?                 | Yes                    |
 | Fully bifurcating tree required?      | Yes                    |
@@ -301,7 +301,7 @@ Nested patch configurations are therefore not supported in version 0.1.
 | Study-specific H/I/J labels required? | No                     |
 | Simulation truth required?            | No                     |
 | Stable method required?               | No                     |
-| Root node allowed as a shift parent?  | No, not in version 0.1 |
+| Root node allowed as a shift parent?  | No, not in the current implementation |
 | Core shift reference type | Original-tree `ape` node numbers |
 | Edge-row indices accepted as shift identifiers? | No |
 
@@ -479,7 +479,7 @@ one of the following categories:
     representations by pruning and collapse and must later be
     reconstructed.
 
-For version 0.1, the designated boundary-node set is
+In the current implementation, the designated boundary-node set is
 
 $$
 V_{\mathrm{boundary}}
@@ -495,7 +495,7 @@ must equal this designated boundary-node set.
 
 If additional original mother-side internal nodes disappear, or if a
 designated boundary node remains assigned to another internal-node
-component, the partition is inconsistent with the version 0.1 specification
+component, the partition is inconsistent with the current implementation specification
 and the procedure must stop.
 
 Therefore,
@@ -1061,7 +1061,7 @@ computational source.
 The `source` field records the computational mechanism by which an estimate
 was obtained.
 
-For version 0.1, the source is conceptually one of:
+In the current implementation, the source is conceptually one of:
 
 - `component_asr`, for estimates obtained by applying `asr_fun` to the
   mother or an internal patch component;
@@ -1109,7 +1109,7 @@ ancestral-state result.
 
 ## 12. Unsupported configurations
 
-Version 0.1 defines the patching procedure only for configurations that
+The current implementation defines the patching procedure only for configurations that
 satisfy the assumptions and compatibility rules specified above.
 
 Configurations outside this domain must be rejected explicitly rather than
@@ -1117,7 +1117,7 @@ processed using undefined or implicit behavior.
 
 ### 12.1 Unsupported tree and trait configurations
 
-Version 0.1 does not support:
+The current implementation does not support:
 
 - unrooted phylogenetic trees;
 - non-bifurcating trees or polytomies;
@@ -1134,7 +1134,7 @@ corresponding algorithmic behavior has been formally defined and tested.
 
 ### 12.2 Unsupported shift configurations
 
-Version 0.1 does not support:
+The current implementation does not support:
 
 - shift specifications that do not correspond to an existing directed edge;
 - duplicated shift edges;
@@ -1196,7 +1196,7 @@ At minimum, this table contains:
 | `source` | computational mechanism producing the estimate |
 | `component` | specific component associated with the estimate |
 
-For version 0.1, `source` is conceptually either `component_asr` or
+In the current implementation, `source` is conceptually either `component_asr` or
 `boundary_reconstruction`, whereas `component` identifies the associated
 component, such as `mother`, `patch_1`, `patch_2`, or `boundary`.
 The `source` and `component` fields provide estimate provenance and do not

@@ -117,7 +117,7 @@ build_patch_entry <- function(
 
   if (is.na(upstream)) {
     stop(
-      "A shift parent cannot be the root in version 0.1.",
+      "A shift parent cannot be the root in the current implementation.",
       call. = FALSE
     )
   }
