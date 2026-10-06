@@ -1,0 +1,6 @@
+"method","n_internal_nodes","boundary_count_AB","boundary_count_BA","exact_identical","max_abs_diff","mean_abs_diff","rmse","n_over_1e_8","status"
+"PIC",15,2,2,TRUE,0,0,0,0,"PASS"
+"ML_BM",15,2,2,TRUE,0,0,0,0,"PASS"
+"GLS_BM",15,2,2,TRUE,0,0,0,0,"PASS"
+"Rphylopars_BM",15,2,2,TRUE,0,0,0,0,"PASS"
+"Bayesian",15,2,2,TRUE,0,0,0,0,"PASS"

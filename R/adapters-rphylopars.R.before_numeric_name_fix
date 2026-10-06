@@ -1,0 +1,198 @@
+# Rphylopars ancestral-state reconstruction adapter.
+
+
+#' Brownian-motion ancestral-state reconstruction using Rphylopars
+#'
+#' Creates an ancestral-state reconstruction backend based on
+#' `Rphylopars::phylopars()` under a Brownian-motion model.
+#'
+#' The returned function satisfies the `asr_fun(tree, states)` interface
+#' required by [patch_asr()].
+#'
+#' `Rphylopars::phylopars()` reports reconstructed states using the local
+#' `ape` node numbers of the component tree. The adapter verifies these
+#' local node identifiers explicitly and maps them to the stable internal
+#' node identifiers stored in `tree$node.label`.
+#'
+#' @param REML Logical. Whether restricted maximum likelihood should be used
+#'   by `Rphylopars::phylopars()`. Defaults to `TRUE`.
+#'
+#' @return A function with arguments `tree` and `states` that returns one
+#'   finite ancestral-state estimate for every internal node of `tree`,
+#'   named with the stable node identifiers in `tree$node.label`.
+#'
+#' @export
+make_asr_rphylopars_bm <- function(
+    REML = TRUE
+) {
+
+  if (!is.logical(REML) ||
+      length(REML) != 1L ||
+      is.na(REML)) {
+    stop(
+      "`REML` must be a single non-missing logical value.",
+      call. = FALSE
+    )
+  }
+
+  function(
+    tree,
+    states
+  ) {
+
+    if (!requireNamespace(
+      "Rphylopars",
+      quietly = TRUE
+    )) {
+      stop(
+        "Package `Rphylopars` is required for ",
+        "`make_asr_rphylopars_bm()` backends. ",
+        "Install it before using this adapter.",
+        call. = FALSE
+      )
+    }
+
+    validate_builtin_asr_inputs(
+      tree,
+      states,
+      "Rphylopars BM ASR"
+    )
+
+    if (tree$Nnode == 0L) {
+      return(
+        stats::setNames(
+          numeric(0),
+          character(0)
+        )
+      )
+    }
+
+    trait_data <- data.frame(
+      species = names(states),
+      trait = as.numeric(states),
+      stringsAsFactors = FALSE
+    )
+
+    fit <- Rphylopars::phylopars(
+      trait_data = trait_data,
+      tree = tree,
+      model = "BM",
+      pheno_error = FALSE,
+      REML = REML
+    )
+
+    if (is.null(
+      fit$anc_recon
+    )) {
+      stop(
+        "Rphylopars BM ASR: `phylopars()` did not return `anc_recon`.",
+        call. = FALSE
+      )
+    }
+
+    anc <- as.data.frame(
+      fit$anc_recon
+    )
+
+    expected_rows <-
+      ape::Ntip(tree) +
+      tree$Nnode
+
+    if (nrow(anc) !=
+        expected_rows) {
+      stop(
+        "Rphylopars BM ASR: `anc_recon` has ",
+        nrow(anc),
+        " rows; expected ",
+        expected_rows,
+        " (= Ntip + Nnode).",
+        call. = FALSE
+      )
+    }
+
+    if (!"trait" %in%
+        colnames(anc)) {
+      stop(
+        "Rphylopars BM ASR: `anc_recon` does not contain ",
+        "the expected `trait` column.",
+        call. = FALSE
+      )
+    }
+
+    row_ids <-
+      rownames(anc)
+
+    if (is.null(row_ids) ||
+        anyNA(row_ids) ||
+        any(row_ids == "") ||
+        anyDuplicated(row_ids)) {
+      stop(
+        "Rphylopars BM ASR: `anc_recon` does not have ",
+        "a complete unique row identity map.",
+        call. = FALSE
+      )
+    }
+
+    local_internal_ids <-
+      as.character(
+        ape::Ntip(tree) +
+          seq_len(
+            tree$Nnode
+          )
+      )
+
+    if (!all(
+      local_internal_ids %in%
+      row_ids
+    )) {
+      stop(
+        "Rphylopars BM ASR: not all local `ape` internal-node IDs ",
+        "were found in `anc_recon` row names. Missing IDs: ",
+        paste(
+          setdiff(
+            local_internal_ids,
+            row_ids
+          ),
+          collapse = ", "
+        ),
+        ".",
+        call. = FALSE
+      )
+    }
+
+    values <-
+      anc[
+        local_internal_ids,
+        "trait",
+        drop = TRUE
+      ]
+
+    values <-
+      as.numeric(
+        values
+      )
+
+    if (length(values) !=
+        tree$Nnode) {
+      stop(
+        "Rphylopars BM ASR: extracted an unexpected number ",
+        "of ancestral estimates.",
+        call. = FALSE
+      )
+    }
+
+    if (any(!is.finite(
+      values
+    ))) {
+      stop(
+        "Rphylopars BM ASR produced non-finite ancestral estimates.",
+        call. = FALSE
+      )
+    }
+
+    stats::setNames(
+      values,
+      tree$node.label
+    )
+  }
+}

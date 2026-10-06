@@ -1,0 +1,331 @@
+
+<!-- README.md is generated from README.Rmd. Please edit README.Rmd, not README.md. -->
+
+# phyloPatch
+
+`phyloPatch` implements patch-aware ancestral-state reconstruction for
+continuous traits on rooted phylogenetic trees containing one or more
+specified branch-localized shifts.
+
+The package is designed for situations in which a localized large trait
+change occurs on a particular phylogenetic branch and the downstream
+observations may influence ancestral-state reconstruction elsewhere in
+the tree.
+
+The central idea is to separate the shift-associated descendant region
+from the remainder of the phylogeny, perform ancestral-state
+reconstruction on the resulting components, reconstruct the boundary
+node connecting those components, and finally merge all estimates back
+onto the internal nodes of the original tree.
+
+## Core workflow
+
+For a specified shift edge from parent node $I$ to child node $J$,
+`phyloPatch` performs the following operations:
+
+1.  validates the phylogeny, observed terminal states, shift edges, and
+    ancestral-state reconstruction backend;
+2.  assigns stable node identifiers before pruning or subtree
+    extraction;
+3.  identifies the descendant patch associated with each shift edge;
+4.  separates the phylogeny into a mother component and one or more
+    patch components;
+5.  performs ancestral-state reconstruction independently on eligible
+    components;
+6.  reconstructs the designated boundary nodes using branch lengths from
+    the original phylogeny; and
+7.  merges component and boundary estimates back onto the complete set
+    of internal nodes of the original tree.
+
+The primary user interface is:
+
+``` r
+patch_asr(
+  tree,
+  states,
+  shifts,
+  asr_fun
+)
+```
+
+## Current scope
+
+The current implementation supports:
+
+- rooted phylogenetic trees;
+- fully bifurcating topologies;
+- finite and strictly positive branch lengths;
+- continuous traits;
+- one finite observed trait value for every terminal taxon;
+- internal or terminal shift children;
+- one or more compatible shift edges; and
+- multiple shifts whose descendant patch sets are pairwise disjoint.
+
+The shift parent must be an internal node and cannot be the root.
+
+Nested or overlapping patch regions are not currently supported.
+
+## Ancestral-state reconstruction backend
+
+`phyloPatch` is not tied to one particular ancestral-state
+reconstruction method.
+
+Users provide an ancestral-state reconstruction function with the
+interface:
+
+``` r
+asr_fun(tree, states)
+```
+
+For each phylogenetic component:
+
+- `tree` is the component phylogeny;
+- `states` is a named numeric vector ordered exactly as
+  `tree$tip.label`; and
+- the function must return one finite ancestral-state estimate for every
+  internal node.
+
+The returned vector must be named using the stable internal-node
+identifiers supplied in `tree$node.label`.
+
+This interface allows different ancestral-state reconstruction methods
+to be connected to the same patching framework through method-specific
+adapters.
+
+## Development installation
+
+`phyloPatch` is currently under development and has not yet been
+released as a stable public version.
+
+From a local source checkout, the development version can be loaded
+with:
+
+``` r
+devtools::load_all(".")
+```
+
+## Minimal example
+
+The following example uses a simple toy ancestral-state reconstruction
+backend to demonstrate the `phyloPatch` interface.
+
+The toy backend is used only for illustrating package mechanics; it is
+not intended as a biological ancestral-state reconstruction method.
+
+``` r
+library(ape)
+
+tree <- read.tree(
+  text = paste0(
+    "((((A:1,B:1)J:1,C:1)I:1,D:1)H:1,",
+    "(E:1,F:1)K:1)ROOT;"
+  )
+)
+
+states <- c(
+  A = 1,
+  B = 2,
+  C = 3,
+  D = 4,
+  E = 5,
+  F = 6
+)
+
+I_node <- Ntip(tree) +
+  match(
+    "I",
+    tree$node.label
+  )
+
+J_node <- Ntip(tree) +
+  match(
+    "J",
+    tree$node.label
+  )
+
+shifts <- data.frame(
+  parent = I_node,
+  child = J_node
+)
+
+mean_backend <- function(
+    tree,
+    states
+) {
+
+  stopifnot(
+    identical(
+      names(states),
+      tree$tip.label
+    )
+  )
+
+  stats::setNames(
+    rep(
+      mean(states),
+      tree$Nnode
+    ),
+    tree$node.label
+  )
+}
+
+fit <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = mean_backend
+)
+
+fit
+#> <patch_asr>
+#>   Internal nodes: 5
+#>   Patches: 1
+#>   Boundary nodes: 1
+#>   Boundary residual: 0e+00
+```
+
+The final ancestral-state estimates can be inspected with:
+
+``` r
+fit$ancestral_states
+#>      node original_node original_label estimate                  source
+#> 1  node_7             7           ROOT     4.50           component_asr
+#> 2  node_8             8              H     4.50           component_asr
+#> 3  node_9             9              I     3.75 boundary_reconstruction
+#> 4 node_10            10              J     1.50           component_asr
+#> 5 node_11            11              K     4.50           component_asr
+#>   component
+#> 1    mother
+#> 2    mother
+#> 3  boundary
+#> 4   patch_1
+#> 5    mother
+```
+
+The result records both the numerical estimate and its provenance.
+
+For example, component-level ancestral-state estimates are labelled:
+
+``` text
+source = component_asr
+```
+
+whereas reconstructed boundary nodes are labelled:
+
+``` text
+source = boundary_reconstruction
+```
+
+The corresponding component is recorded separately, for example:
+
+``` text
+mother
+patch_1
+boundary
+```
+
+## Shift-edge specification
+
+Shift edges are supplied as a data frame containing two columns:
+
+``` r
+data.frame(
+  parent = ...,
+  child = ...
+)
+```
+
+Both values refer to the original `ape` node numbers in the exact input
+tree supplied to `patch_asr()`.
+
+For example:
+
+``` r
+shifts <- data.frame(
+  parent = 9,
+  child = 10
+)
+```
+
+means that the directed edge:
+
+``` text
+9 -> 10
+```
+
+is treated as the designated branch-localized shift.
+
+Edge-row numbers from `tree$edge` should not be used as node
+identifiers.
+
+## Output
+
+`patch_asr()` returns an object of class:
+
+``` text
+patch_asr
+```
+
+The main result table is:
+
+``` r
+fit$ancestral_states
+```
+
+and contains:
+
+- stable node identifier;
+- original `ape` node number;
+- original node label, when available;
+- reconstructed ancestral-state estimate;
+- computational source of the estimate; and
+- component provenance.
+
+Additional information is available in:
+
+``` r
+fit$patch_plan
+fit$boundary_states
+fit$component_states
+fit$node_map
+fit$diagnostics
+```
+
+## Methodological boundaries
+
+`phyloPatch` deliberately separates the patching algorithm from the
+ancestral-state reconstruction method itself.
+
+The core package therefore handles:
+
+- shift specification;
+- stable node identity;
+- phylogenetic partitioning;
+- component management;
+- boundary reconstruction; and
+- result merging.
+
+Specific ancestral-state reconstruction methods are connected through
+the standardized `asr_fun(tree, states)` interface.
+
+This separation makes it possible to evaluate the patching framework
+with different reconstruction methods without changing the core
+partitioning algorithm.
+
+## Development status
+
+The package is currently under active development.
+
+The current implementation has automated tests covering:
+
+- input validation;
+- stable node identity;
+- patch-plan construction;
+- internal and terminal patches;
+- multiple compatible shifts;
+- tree partitioning;
+- component-wise reconstruction;
+- boundary reconstruction;
+- coupled boundary systems;
+- result merging; and
+- the public `patch_asr()` interface.

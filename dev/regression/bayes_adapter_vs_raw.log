@@ -1,0 +1,102 @@
+Tree tips:      128
+Internal nodes: 127
+Shift:          178 -> 179
+
+Starting raw-vs-adapter Bayesian validation...
+
+
+============================================================
+VALIDATING component_1
+============================================================
+Ntip  = 120
+Nnode = 119
+Control parameters (set by user or default):
+List of 7
+ $ sig2   : num 0.983
+ $ a      : num [1, 1] 5.71
+ $ y      : num [1:118] 5.71 5.71 5.71 5.71 5.71 ...
+ $ pr.mean: num [1:120] 1000 0 0 0 0 0 0 0 0 0 ...
+ $ pr.var : num [1:120] 1e+06 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 ...
+ $ prop   : num [1:120] 0.00983 0.00983 0.00983 0.00983 0.00983 ...
+ $ sample : int 100
+Starting MCMC...
+Done MCMC.
+Control parameters (set by user or default):
+List of 7
+ $ sig2   : num 0.983
+ $ a      : num [1, 1] 5.71
+ $ y      : num [1:118] 5.71 5.71 5.71 5.71 5.71 ...
+ $ pr.mean: num [1:120] 1000 0 0 0 0 0 0 0 0 0 ...
+ $ pr.var : num [1:120] 1e+06 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 ...
+ $ prop   : num [1:120] 0.00983 0.00983 0.00983 0.00983 0.00983 ...
+ $ sample : int 100
+Starting MCMC...
+Done MCMC.
+Component seed = 1600555558
+MCMC rows = 11
+Burn-in rows = 2
+Retained rows = 9
+Exact adapter/raw identity = TRUE
+Maximum absolute difference = 0e+00
+Component status = PASS
+
+
+============================================================
+VALIDATING component_2
+============================================================
+Ntip  = 8
+Nnode = 7
+Control parameters (set by user or default):
+List of 7
+ $ sig2   : num 0.699
+ $ a      : num [1, 1] 91.3
+ $ y      : num [1:6] 91.3 91.3 91.3 91.3 91.3 ...
+ $ pr.mean: num [1:8] 1000 0 0 0 0 0 0 0
+ $ pr.var : num [1:8] 1e+06 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03
+ $ prop   : num [1:8] 0.003 0.003 0.003 0.003 0.003 ...
+ $ sample : int 100
+Starting MCMC...
+Done MCMC.
+Control parameters (set by user or default):
+List of 7
+ $ sig2   : num 0.699
+ $ a      : num [1, 1] 91.3
+ $ y      : num [1:6] 91.3 91.3 91.3 91.3 91.3 ...
+ $ pr.mean: num [1:8] 1000 0 0 0 0 0 0 0
+ $ pr.var : num [1:8] 1e+06 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03 1e+03
+ $ prop   : num [1:8] 0.003 0.003 0.003 0.003 0.003 ...
+ $ sample : int 100
+Starting MCMC...
+Done MCMC.
+Component seed = 715811752
+MCMC rows = 11
+Burn-in rows = 2
+Retained rows = 9
+Exact adapter/raw identity = TRUE
+Maximum absolute difference = 0e+00
+Component status = PASS
+
+
+============================================================
+BAYESIAN ADAPTER vs RAW anc.Bayes SUMMARY
+============================================================
+   component n_tip n_node component_seed n_mcmc_rows burnin_rows retained_rows
+ component_1   120    119     1600555558          11           2             9
+ component_2     8      7      715811752          11           2             9
+ exact_identical max_abs_diff mean_abs_diff rmse status
+            TRUE            0             0    0   PASS
+            TRUE            0             0    0   PASS
+
+Expected component calls: 2
+Observed component calls: 2
+Component count correct: TRUE
+All component seeds unique: TRUE
+All node-wise differences exactly zero: TRUE
+
+Overall adapter-vs-raw status: PASS
+
+Component summary file:
+/home/chengyq/work/ASE/data/jump_simu/simu/BM/balanced/jump_16/rep_001/bayesian_adapter_vs_raw_component_summary.csv
+
+Node-wise comparison file:
+/home/chengyq/work/ASE/data/jump_simu/simu/BM/balanced/jump_16/rep_001/bayesian_adapter_vs_raw_nodewise.csv

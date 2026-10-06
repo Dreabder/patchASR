@@ -1,0 +1,33 @@
+Package: phyloPatch
+Title: Patch-Aware Ancestral State Reconstruction for Branch-Localized Shifts
+Version: 0.0.0.9000
+Authors@R:
+    person(
+      given = "Yuki",
+      family = "Cheng",
+      email = "dreabder@gmail.com",
+      role = c("aut", "cre")
+    )
+Description: Implements patch-aware ancestral state reconstruction for
+    continuous traits on rooted, fully bifurcating phylogenetic trees with
+    one or more specified branch-localized shifts. Compatible non-overlapping
+    shift regions are partitioned into mother and patch components, and a
+    user-supplied ancestral-state reconstruction function is applied to
+    eligible components. Boundary ancestral states are reconstructed using
+    branch lengths from the original phylogeny, after which component and
+    boundary estimates are merged back onto the internal nodes of the
+    original tree while preserving node identity and estimate provenance.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Suggests: 
+    knitr,
+    phytools,
+    rmarkdown,
+    Rphylopars,
+    testthat (>= 3.2.3)
+VignetteBuilder: knitr
+Imports: 
+    ape
+Config/testthat/edition: 3

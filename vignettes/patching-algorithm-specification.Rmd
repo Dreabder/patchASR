@@ -1,0 +1,1255 @@
+---
+title: "Patching Algorithm Specification"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Patching Algorithm Specification}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+**Specification version:** 0.1
+
+
+**Status:** Frozen for initial package implementation
+
+## Scope
+
+This document defines the computational specification of the phylogenetic
+patching algorithm implemented in `phyloPatch`.
+
+The algorithm is designed to perform ancestral-state reconstruction (ASR)
+after partitioning a phylogeny across one or more designated shift edges.
+
+The patching procedure is independent of any particular ancestral-state
+reconstruction method. An ASR method is supplied separately through a
+standardized reconstruction function.
+
+The specification covers:
+
+1. Input contract
+2. Shift-edge definition
+3. Node identity system
+4. Patch compatibility and validation
+5. Patch-plan construction
+6. Tree partition and patch-component construction
+7. Terminal-shift rule
+8. Component-wise ASR
+9. Boundary reconstruction
+10. Multi-shift boundary system
+11. Result merging and invariants
+12. Unsupported configurations
+13. Output object
+
+## 1. Input contract
+
+The core patching algorithm requires four primary inputs:
+
+1. `tree`: a rooted phylogenetic tree of class `phylo`;
+2. `states`: a named numeric vector containing observed continuous trait
+   values for all terminal taxa;
+3. `shifts`: a specification of one or more branches across which patching
+   is to be performed;
+4. `asr_fun`: a reconstruction function that estimates ancestral states for
+   the internal nodes of a supplied phylogenetic component.
+
+The patching algorithm must not require simulation-specific information such
+as true ancestral states, jump multipliers, simulation seeds, predefined
+focal-node labels, or study-specific metadata.
+
+### 1.1 Phylogenetic tree
+
+`tree` must be a single rooted tree of class `phylo`.
+
+For the initial implementation, the tree must:
+
+- be rooted;
+- be fully bifurcating;
+- contain finite branch lengths;
+- contain strictly positive branch lengths;
+- contain unique terminal labels.
+
+Internal node labels may be present but are not required for identifying
+nodes internally within the patching algorithm.
+
+### 1.2 Observed terminal states
+
+`states` must be a named numeric vector.
+
+The names of `states` must correspond exactly to the terminal labels in
+`tree$tip.label`.
+
+For version 0.1, every terminal taxon must have one finite observed
+continuous trait value.
+
+The algorithm must verify that:
+
+- every tip in the tree has exactly one trait value;
+- no unknown tip labels occur in `states`;
+- no duplicated tip names occur;
+- all trait values are finite.
+
+### 1.3 Shift specification
+
+`shifts` identifies the branches across which the phylogeny is to be
+partitioned.
+
+Conceptually, each shift is represented by a directed edge
+
+$$
+e_s = (I, J),
+$$
+
+where $I$ is the parent node and $J$ is its direct child in the rooted phylogeny.
+
+For multiple shifts, `shifts` contains one row per shift.
+
+Conceptually, the biological interpretation is:
+
+| shift | parent | child |
+|------:|-------:|------:|
+| 1 | I1 | J1 |
+| 2 | I2 | J2 |
+| ... | ... | ... |
+
+For version 0.1, `parent` and `child` are specified using the `ape` node
+numbers of the original `phylo` object supplied in `tree`.
+
+Thus, every row of `shifts` identifies an existing directed edge by the
+ordered pair
+
+$$
+(\mathrm{parent\ node\ number},\ \mathrm{child\ node\ number}).
+$$
+
+`parent` must refer to an internal node. `child` may refer to either an
+internal node or a terminal tip.
+
+These node numbers are interpreted only relative to the exact input `tree`
+object supplied to `patch_asr()`.
+
+Edge-row indices in `tree$edge` are not accepted as biological identifiers
+of shift branches because edge-matrix row order may change without changing
+the phylogeny.
+
+Immediately after input validation, these original-tree node numbers are
+mapped to the stable internal node identities used by the patching algorithm.
+
+### 1.4 Ancestral-state reconstruction function
+
+`asr_fun` defines how ancestral states are reconstructed within an individual
+phylogenetic component.
+
+Conceptually, it must behave as:
+
+```r
+asr_fun(tree, states)
+```
+
+where:
+
+- `tree` is one phylogenetic component;
+- `states` contains trait values for all tips of that component.
+
+The function must return one finite ancestral-state estimate for every
+internal node of that component.
+
+The patching algorithm itself must not assume that `asr_fun` uses PIC,
+maximum likelihood, GLS, Bayesian inference, or any other particular
+estimator.
+
+## 2. Shift-edge definition
+
+For each designated shift edge, let
+
+$$
+I \rightarrow J
+$$
+
+denote the directed parent-child branch across which patching is
+performed.
+
+Here:
+
+- $I$ is the parent boundary node;
+- $J$ is the child node at the root of the descendant patch component.
+
+Given the shift edge $I \rightarrow J$, the algorithm derives:
+
+- $H = parent(I)$;
+- $J'$, the other child of $I$.
+
+Thus, $H$ and $J'$ are topological properties derived from the input
+tree and must not normally be supplied independently by the user.
+
+The descendant patch associated with the shift edge $I \rightarrow J$
+consists of the complete descendant clade rooted at $J$.
+
+If $J$ is an internal node, the patch contains $J$, all internal
+descendants of $J$, and all terminal descendants of $J$.
+
+If $J$ is a terminal node, the patch contains only that observed
+terminal taxon and contains no internal node requiring ancestral-state
+reconstruction.
+
+## 3. Node identity system
+
+All node identities are defined relative to the original input tree.
+
+The original `ape` node numbers supplied by the user are treated as input
+references only. They identify nodes in the exact original `phylo` object at
+the time `patch_asr()` is called.
+
+Before any pruning, subtree extraction, or reordering is performed, each
+original tip and internal node is assigned a package-internal stable node
+identifier.
+
+Subsequent patching operations use these stable identifiers rather than
+assuming that local `ape` node numbers remain unchanged. Tree-partitioning
+operations may alter local `ape` node numbering, but such renumbering must
+not alter biological node identity.
+
+Stable identifiers are attached only to an internal working copy of the
+phylogeny. Assigning or propagating stable identifiers must not modify the
+user-supplied `tree` object.
+
+The original `ape` node number is retained in the node map for traceability,
+but derived-tree operations must not assume that this number remains valid as
+a local node number after pruning, subtree extraction, or reordering.
+
+Each derived tree component must retain a mapping between:
+
+1.  its local `ape` node number;
+2.  the stable node identifier assigned in the original tree.
+
+All intermediate ASR estimates are mapped through the stable identifier
+rather than being merged by local `ape` node numbers.
+
+Node identity must remain invariant to operations such as:
+
+-   subtree extraction;
+-   tip deletion;
+-   collapse of degree-two nodes;
+-   reordering of the `phylo` edge matrix.
+
+Any node estimate returned from a component-level ASR analysis must
+therefore be mapped back to the corresponding node in the original input
+tree before different component results are merged.
+
+## 4. Patch compatibility and validation
+
+Before constructing any patch components, the algorithm validates both
+the input phylogeny and the requested shift configuration.
+
+The following conditions must hold:
+
+1. every `parent` and `child` reference must be a finite integer node number valid for the original input tree, and every specified `parent -> child` pair must correspond to exactly one directed edge in that tree;
+2.  no shift edge may be duplicated;
+3.  each shift parent must be an internal node;
+4.  every shift child must be a direct child of its specified parent;
+5.  each boundary parent must be associated with only one requested
+    shift edge in version 0.1;
+6.  all shift edges must satisfy the multiple-shift compatibility rule
+    defined below;
+7.  each shift parent $I_k$ must itself have a parent node $H_k$;
+    therefore, the root node cannot serve as a shift parent in version
+    0.1.
+
+### 4.1 Multiple-shift compatibility
+
+For a shift whose child node is $J_k$, let $D(J_k)$ denote the complete
+descendant node set rooted at $J_k$, including $J_k$ itself.
+
+For version 0.1, multiple shifts are supported only when their
+descendant patches are pairwise disjoint:
+
+$$
+D(J_a) \cap D(J_b) = \varnothing
+$$
+
+for every pair $a \ne b$.
+
+This condition prevents one requested patch from being nested within
+another requested patch.
+
+Nested patch configurations are therefore not supported in version 0.1.
+
+### 4.2 Version 0.1 design decisions
+
+| Question                              | Version 0.1 decision   |
+|---------------------------------------|------------------------|
+| Rooted tree required?                 | Yes                    |
+| Fully bifurcating tree required?      | Yes                    |
+| Positive branch lengths required?     | Yes                    |
+| Missing tip states allowed?           | No                     |
+| One shift supported?                  | Yes                    |
+| Multiple shifts supported?            | Yes                    |
+| Terminal-child shift supported?       | Yes                    |
+| Internal-child shift supported?       | Yes                    |
+| Pairwise-disjoint patches supported?  | Yes                    |
+| Nested patches supported?             | No                     |
+| Same parent used by multiple shifts?  | No, initially          |
+| Study-specific H/I/J labels required? | No                     |
+| Simulation truth required?            | No                     |
+| Stable method required?               | No                     |
+| Root node allowed as a shift parent?  | No, not in version 0.1 |
+| Core shift reference type | Original-tree `ape` node numbers |
+| Edge-row indices accepted as shift identifiers? | No |
+
+## 5. Patch-plan construction
+
+A patch plan is constructed before any pruning or subtree extraction is
+performed.
+
+The patch plan records the topological information required to execute
+the patching procedure while all node identities are still defined
+relative to the original input tree.
+
+Each requested shift edge contributes one patch entry to the plan.
+
+For each shift edge
+
+$$
+I_k \rightarrow J_k,
+$$
+
+the corresponding patch entry must record at least:
+
+-   the stable identifier of the shift parent $I_k$;
+-   the stable identifier of the shift child $J_k$;
+-   the stable identifier of $H_k = parent(I_k)$;
+-   the stable identifier of $J'_k$, the other child of $I_k$;
+-   whether $J_k$ is an internal node or a terminal tip;
+-   the complete descendant tip set rooted at $J_k$;
+-   the complete descendant internal-node set rooted at $J_k$;
+-   whether the patch component requires ancestral-state reconstruction;
+-   the branch lengths required later for boundary reconstruction.
+
+Conceptually, a patch plan may be represented as:
+
+| patch | parent | child | child type | boundary | requires ASR |
+|------:|--------|-------|------------|----------|--------------|
+|     1 | I1     | J1    | internal   | I1       | TRUE         |
+|     2 | I2     | J2    | terminal   | I2       | FALSE        |
+|   ... | ...    | ...   | ...        | ...      | ...          |
+
+Patch-plan construction must be non-destructive.
+
+Constructing the plan must not modify the original phylogenetic tree,
+its branch lengths, its tip labels, or its topology.
+
+Actual tree partitioning is performed only after the patch plan has been
+successfully constructed and validated.
+
+The biological identity of a patch must not depend on the row order of
+the `shifts` input.
+
+The implementation may assign an internal patch index for bookkeeping,
+but reordering compatible shift rows must not change the final patched
+ancestral state estimates.
+
+### 5.1 Patch-plan invariants
+
+After successful construction, the patch plan must satisfy the following
+conditions:
+
+-   every requested shift edge appears exactly once;
+-   every patch has exactly one parent and one child;
+-   every child is a direct descendant of its recorded parent;
+-   every boundary node corresponds to the parent of a requested shift
+    edge;
+-   every internal-child patch has a non-empty descendant internal-node
+    set;
+-   every terminal-child patch has an empty descendant internal-node
+    set;
+-   descendant patch sets satisfy the compatibility rules defined in
+    Section 4;
+-   all node identifiers refer to nodes in the original input tree.
+
+## 6. Tree partition and patch-component construction
+
+After a valid patch plan has been constructed, the original phylogeny is
+partitioned into one mother component and one patch component for each
+requested shift edge.
+
+Tree partitioning is performed with reference to the stable node
+identities defined on the original input tree.
+
+For multiple compatible shifts, all designated descendant patch clades
+are removed from the mother component as part of the same partitioning
+operation. The resulting partition must not depend on the order in which
+the shift edges were supplied by the user.
+
+### 6.1 Mother component
+
+Let $T$ denote the original phylogenetic tree and let
+
+$$
+P_k
+$$
+
+denote the complete descendant patch rooted at $J_k$ for shift $k$.
+
+The mother component is obtained by removing the terminal descendants
+belonging to all requested patch components from the original tree.
+
+For $m$ compatible shifts, let
+
+$$
+L_{\mathrm{patch}}
+=
+\bigcup_{k=1}^{m} L(P_k),
+$$
+
+where $L(P_k)$ is the set of terminal taxa contained in patch $k$.
+
+The mother tree is constructed by removing all taxa in
+$L_{\mathrm{patch}}$ from the original tree.
+
+Degree-two internal nodes created solely by patch removal may be
+collapsed when constructing the mother tree.
+
+Such collapse changes the local representation of the pruned tree but
+does not remove the corresponding biological node identity from the
+patching problem.
+
+Any original internal node removed from the local mother-tree
+representation because of this collapse must remain represented in the
+patch plan and must either belong to a patch component or be
+reconstructed as a boundary node.
+
+Branch lengths introduced by collapsing degree-two nodes in the mother
+tree are local properties of the derived component.
+
+Boundary reconstruction must therefore use branch lengths from the
+original input tree rather than merged branch lengths from the pruned
+mother tree.
+
+### 6.2 Internal patch component
+
+When $J_k$ is an internal node, patch $k$ is the complete clade rooted
+at $J_k$.
+
+The corresponding patch tree contains:
+
+-   $J_k$;
+-   every internal descendant of $J_k$;
+-   every terminal descendant of $J_k$;
+-   the original branch lengths connecting nodes within that descendant
+    clade.
+
+The patch tree is extracted directly from the original input tree rather
+than from the already-pruned mother tree.
+
+The root node $J_k$ belongs to the patch component and, when internal,
+receives its ancestral-state estimate from the ASR performed on that
+patch component.
+
+### 6.3 Terminal patch component
+
+When $J_k$ is a terminal node, patch $k$ contains one observed terminal
+taxon and no internal node.
+
+Such a patch is still part of the tree partition, but it does not
+require a separate ancestral-state reconstruction.
+
+The terminal taxon is removed from the mother component in the same way
+as the terminal descendants of an internal patch.
+
+### 6.4 Internal-node partition
+
+Let $V_{\mathrm{int}}(T)$ denote the complete set of internal nodes in
+the original tree.
+
+After partitioning, each original internal node must belong to exactly
+one of the following categories:
+
+1.  an internal node retained in the mother component;
+2.  an internal node belonging to exactly one patch component;
+3.  a boundary node that was removed from the local component
+    representations by pruning and collapse and must later be
+    reconstructed.
+
+For version 0.1, the designated boundary-node set is
+
+$$
+V_{\mathrm{boundary}}
+=
+\{I_1, I_2, \ldots, I_m\},
+$$
+
+where each $I_k$ is the parent node of one requested shift edge.
+
+After construction of the mother component, the set of original
+mother-side internal nodes removed solely through pruning-induced collapse
+must equal this designated boundary-node set.
+
+If additional original mother-side internal nodes disappear, or if a
+designated boundary node remains assigned to another internal-node
+component, the partition is inconsistent with the version 0.1 specification
+and the procedure must stop.
+
+Therefore,
+
+$$
+V_{\mathrm{int}}(T)
+=
+V_{\mathrm{mother}}
+\;\dot\cup\;
+V_{\mathrm{patch},1}
+\;\dot\cup\;
+\cdots
+\;\dot\cup\;
+V_{\mathrm{patch},m}
+\;\dot\cup\;
+V_{\mathrm{boundary}},
+$$
+
+where $\dot\cup$ denotes a disjoint union.
+
+### 6.5 Partition invariants
+
+After tree partitioning, the following conditions must hold:
+
+-   every original internal node is represented exactly once across the
+    mother, patch, and boundary node sets;
+-   no internal node occurs in more than one patch component;
+-   no patch internal node is also retained as a mother internal node;
+-   no boundary node is retained as a mother or patch internal node;
+-   every terminal taxon assigned to a patch is absent from the mother
+    tree;
+-   every terminal taxon not assigned to any patch remains in the mother
+    tree;
+-   every internal-child patch retains its original root $J_k$;
+-   every terminal-child patch contains no internal node;
+-   all component node identities remain traceable to the original tree;
+- the original mother-side internal nodes absent because of pruning-induced
+  collapse are exactly the designated shift parents.
+
+The original input tree must remain unchanged throughout partitioning.
+
+Mother and patch trees are derived objects. No pruning, relabeling,
+branch length modification, or node renumbering performed for a derived
+component may modify the original tree object used to define stable node
+identities and boundary geometry.
+
+## 7. Terminal-shift rule
+
+A terminal shift occurs when the child $J_k$ of a designated shift edge
+
+$$
+I_k \rightarrow J_k
+$$
+
+is a terminal taxon in the original tree.
+
+In this case, the patch component contains no internal node and
+therefore no component-level ASR is performed for that patch.
+
+For a terminal shift, the algorithm must:
+
+1.  retain the observed trait value of $J_k$ as an observed terminal
+    state;
+2.  remove $J_k$ from the mother component;
+3.  construct no separate internal-node ASR problem for the terminal
+    patch;
+4. treat $I_k$ as a designated boundary node rather than as a
+   component-level ASR node;
+5.  reconstruct $I_k$ later using the same boundary-reconstruction
+    framework used for internal-child patches.
+
+A one-tip terminal patch must not be passed to an ancestral-state
+reconstruction routine merely to preserve a uniform calling pattern.
+
+Because no ancestral node exists within such a component, the correct
+component-level ASR result is an empty set of ancestral-state estimates.
+
+### 7.1 Terminal-shift invariants
+
+For every terminal-child patch:
+
+-   the patch contains exactly one terminal taxon;
+-   the patch contains zero internal nodes;
+-   `requires_asr` is `FALSE`;
+-   no ancestral-state estimate is expected from the patch component
+    itself;
+-   the terminal taxon's observed state remains available to later
+    stages when required;
+-   the boundary parent remains part of the complete original
+    internal-node accounting.
+
+## 8. Component-wise ancestral-state reconstruction
+
+After tree partitioning, ancestral-state reconstruction is performed independently on each phylogenetic component that contains one or more internal nodes.
+
+The reconstruction stage treats the ASR method as an interchangeable computational backend. The patching algorithm defines how the phylogeny is partitioned and how component-level estimates are recombined, but it does not prescribe a particular ancestral-state estimator.
+
+The same standardized ASR function must therefore be applicable to:
+
+- the mother component;
+- every internal patch component requiring ancestral-state reconstruction.
+
+Terminal patch components contain no internal nodes and are not passed to the ASR function.
+
+### 8.1 Standard ASR function contract
+
+Within the patching algorithm, an ASR backend is represented conceptually by a function of the form:
+
+```r
+asr_fun(tree, states)
+```
+
+where:
+
+- `tree` is one derived phylogenetic component;
+- `states` is a named numeric vector containing the observed trait values of all tips in that component.
+
+Before `asr_fun` is called, `states` must be reordered so that:
+
+```r
+identical(names(states), tree$tip.label)
+```
+
+is `TRUE`.
+
+The ASR function must return one ancestral-state estimate for every internal node of the supplied component.
+
+The standardized return value must be a named numeric vector in which:
+
+- the vector length equals the number of internal nodes in the component;
+- every value is finite;
+- every name uniquely identifies one internal node in that component;
+- no expected internal node is missing;
+- no unexpected internal node is present;
+- no internal node occurs more than once.
+
+For the standardized interface consumed by the core patching algorithm, the
+names of the returned vector must correspond exactly to the stable
+identifiers of the internal nodes in the supplied component.
+
+The order of the returned estimates need not match the local node order.
+The algorithm validates the complete node-identifier set and then reorders
+the estimates by stable node identity before downstream calculations.
+
+Method-specific adapters are responsible for converting native ASR output
+into this standardized representation.
+
+### 8.2 ASR adapters
+
+Functions from external phylogenetic packages are not required to natively satisfy the standardized `asr_fun` contract.
+
+Instead, method-specific adapter functions may be used to:
+
+1. call the external ASR implementation;
+2. extract its internal-node estimates;
+3. map method-specific or local node identifiers to the stable node identities used by `phyloPatch`;
+4. validate the resulting estimate vector;
+5. return the standardized named numeric vector required by the patching algorithm.
+
+This separation allows the patching procedure to remain independent of any particular ASR implementation.
+
+
+### 8.3 Component-level reconstruction
+
+For the mother component, let
+
+\[
+\widehat{\mathbf{x}}_{\mathrm{mother}}
+\]
+
+denote the ancestral-state estimates returned by `asr_fun`.
+
+For each internal patch component \(P_k\), let
+
+\[
+\widehat{\mathbf{x}}_{\mathrm{patch},k}
+\]
+
+denote its independently reconstructed ancestral-state estimates.
+
+These component-level estimates are retained separately until boundary reconstruction has been completed.
+
+Observed terminal trait values are not treated as ancestral-state estimates, but remain available as known states when required by later boundary reconstruction.
+
+### 8.4 ASR-result invariants
+
+For every component passed to `asr_fun`:
+
+- the tip-state vector must match the component tip set exactly;
+- every component internal node must receive exactly one estimate;
+- every returned estimate must be finite;
+- all returned node identities must map unambiguously to the original tree;
+- a component-level estimate must not be assigned to an internal node that does not belong to that component.
+
+Failure of any of these conditions must stop the patching procedure before component results are merged.
+
+## 9. Boundary reconstruction
+
+Tree pruning and collapse may remove a shift parent \(I_k\) from the local mother-tree representation.
+
+Such a node remains an internal node of the original phylogeny and must therefore receive an ancestral-state estimate in the final patched result.
+
+For each shift edge
+
+\[
+I_k \rightarrow J_k,
+\]
+
+let:
+
+- \(H_k = parent(I_k)\);
+- \(J'_k\) be the other child of \(I_k\);
+- \(d_{H_k I_k}\) be the original branch length from \(H_k\) to \(I_k\);
+- \(d_{I_k J'_k}\) be the original branch length from \(I_k\) to \(J'_k\).
+
+Boundary reconstruction uses the geometry of the original input tree, not branch lengths produced after pruning or collapsing derived components.
+
+### 9.1 Single-boundary interpolation
+
+When the states associated with both \(H_k\) and \(J'_k\) are already known, the reconstructed state of \(I_k\) is obtained by branch-length-weighted linear interpolation:
+
+\[
+\widehat{X}_{I_k}
+=
+\widehat{X}_{H_k}
++
+\left(
+\widehat{X}_{J'_k}
+-
+\widehat{X}_{H_k}
+\right)
+\frac{d_{H_k I_k}}
+{d_{H_k I_k}+d_{I_k J'_k}}.
+\]
+
+Equivalently,
+
+\[
+\widehat{X}_{I_k}
+=
+\frac{d_{I_k J'_k}}
+{d_{H_k I_k}+d_{I_k J'_k}}
+\widehat{X}_{H_k}
++
+\frac{d_{H_k I_k}}
+{d_{H_k I_k}+d_{I_k J'_k}}
+\widehat{X}_{J'_k}.
+\]
+
+Thus, the reconstructed boundary state lies at the relative branch-length position of \(I_k\) along the original \(H_k-I_k-J'_k\) path.
+
+### 9.2 Sources of known boundary-adjacent states
+
+A state required for boundary reconstruction may originate from different parts of the partitioned analysis.
+
+A known adjacent state may be:
+
+- an ancestral-state estimate from the mother component;
+- an ancestral-state estimate from an internal patch component;
+- an observed trait value of a terminal taxon.
+
+Boundary reconstruction must therefore operate on a unified collection of known node states rather than relying exclusively on mother-component estimates.
+
+If an adjacent node is itself an unresolved boundary node, its value is not yet known and must instead be handled by the multi-shift boundary system defined in Section 10.
+
+### 9.3 Boundary-reconstruction invariants
+
+For every reconstructed boundary node:
+
+- \(H_k\), \(I_k\), and \(J'_k\) must refer to stable node identities in the original tree;
+- the edges \(H_k \rightarrow I_k\) and \(I_k \rightarrow J'_k\) must exist in the original tree;
+- both required branch lengths must be finite and strictly positive;
+- all branch lengths used in interpolation must come from the original input tree;
+- every known adjacent state used in the interpolation must be finite;
+- exactly one reconstructed state must ultimately be produced for each boundary node.
+
+## 10. Multi-shift boundary system
+
+When multiple compatible shift edges are patched simultaneously, a boundary
+node may depend on another boundary node whose state has not yet been reconstructed.
+
+In such cases, boundary nodes must not be reconstructed sequentially using an arbitrary processing order.
+
+Instead, all unresolved boundary states are represented jointly as unknowns in a linear system derived from the branch-length interpolation equations.
+
+### 10.1 Boundary-state vector
+
+Suppose that \(m\) boundary nodes require reconstruction.
+
+Their unknown ancestral states are collected into the vector
+
+$$
+\mathbf{x}
+=
+\begin{bmatrix}
+\widehat{X}_{I_1} \\
+\widehat{X}_{I_2} \\
+\vdots \\
+\widehat{X}_{I_m}
+\end{bmatrix}.
+$$
+
+Each row of the boundary system corresponds to one boundary node and is
+derived from the interpolation equation defined in Section 9.
+
+### 10.2 Boundary interpolation weights
+
+For boundary node \(I_k\), define
+
+$$
+w_{H,k}
+=
+\frac{d_{I_kJ'_k}}
+{d_{H_kI_k}+d_{I_kJ'_k}}
+$$
+
+and
+
+$$
+w_{S,k}
+=
+\frac{d_{H_kI_k}}
+{d_{H_kI_k}+d_{I_kJ'_k}}.
+$$
+
+The interpolation equation is therefore
+
+$$
+\widehat{X}_{I_k}
+=
+w_{H,k}\widehat{X}_{H_k}
++
+w_{S,k}\widehat{X}_{J'_k}.
+$$
+
+By construction,
+
+$$
+w_{H,k}+w_{S,k}=1.
+$$
+
+### 10.3 Linear-system formulation
+
+For each boundary equation, terms involving already known node states are
+placed on the right-hand side, whereas terms involving other unresolved
+boundary nodes remain on the left-hand side.
+
+The complete set of boundary equations can therefore be written as
+
+$$
+\mathbf{A}\mathbf{x}=\mathbf{b},
+$$
+
+where:
+
+- \(\mathbf{x}\) contains the unknown boundary states;
+- \(\mathbf{A}\) contains coefficients relating boundary nodes to one another;
+- \(\mathbf{b}\) contains contributions from already known mother, patch, or
+  terminal states.
+
+The diagonal coefficient for each boundary equation is initially 1.
+
+If an adjacent node is another unresolved boundary node, its interpolation
+weight is subtracted from the corresponding off-diagonal entry of
+\(\mathbf{A}\).
+
+If an adjacent node has an already known state, its weighted contribution is
+added to the corresponding entry of \(\mathbf{b}\).
+
+### 10.4 Two-boundary example
+
+Consider two unresolved boundary nodes, \(I_1\) and \(I_2\), with equations
+
+$$
+\widehat{X}_{I_1}
+=
+a_1
++
+c_{12}\widehat{X}_{I_2},
+$$
+
+and
+
+$$
+\widehat{X}_{I_2}
+=
+a_2
++
+c_{21}\widehat{X}_{I_1},
+$$
+
+where \(a_1\) and \(a_2\) summarize weighted contributions from known node
+states.
+
+Rearranging gives
+
+$$
+\widehat{X}_{I_1}
+-
+c_{12}\widehat{X}_{I_2}
+=
+a_1
+$$
+
+and
+
+$$
+-c_{21}\widehat{X}_{I_1}
++
+\widehat{X}_{I_2}
+=
+a_2.
+$$
+
+Thus,
+
+$$
+\begin{bmatrix}
+1 & -c_{12} \\
+-c_{21} & 1
+\end{bmatrix}
+\begin{bmatrix}
+\widehat{X}_{I_1} \\
+\widehat{X}_{I_2}
+\end{bmatrix}
+=
+\begin{bmatrix}
+a_1 \\
+a_2
+\end{bmatrix}.
+$$
+
+### 10.5 Unified known-state pool
+
+Before the boundary system is assembled, the algorithm constructs a unified
+collection of already known node states.
+
+This collection may contain:
+
+- ancestral-state estimates from the mother component;
+- ancestral-state estimates from any internal patch component;
+- observed states of terminal taxa.
+
+Boundary nodes that have not yet been reconstructed must not be inserted into
+this known-state collection.
+
+Node states in the unified collection are indexed by the stable node
+identities defined relative to the original input tree.
+
+### 10.6 Solving the boundary system
+
+After \(\mathbf{A}\) and \(\mathbf{b}\) have been constructed, the boundary
+states are obtained by solving
+
+$$
+\mathbf{x}
+=
+\mathbf{A}^{-1}\mathbf{b},
+$$
+
+conceptually, or by an equivalent numerical linear-system solver.
+
+The implementation should solve the system directly rather than explicitly
+computing the matrix inverse.
+
+If the coefficient matrix is singular or the system cannot be solved
+reliably, the patching procedure must stop with an informative error rather
+than returning partially reconstructed boundary states.
+
+After solving the system, the implementation must verify that all boundary
+estimates are finite and that the numerical residual of the reconstructed
+system is acceptably small.
+
+Conceptually, the residual is evaluated from
+
+$$
+\mathbf{r}
+=
+\mathbf{A}\widehat{\mathbf{x}}
+-
+\mathbf{b}.
+$$
+
+A solution that fails the numerical residual check must not be returned as a
+valid boundary reconstruction. The numerical tolerance used for this check
+is an implementation detail and should be documented and tested.
+
+### 10.7 Multi-shift boundary invariants
+
+The multi-shift boundary system must satisfy the following conditions:
+
+- there is exactly one equation for every unresolved boundary node;
+- there is exactly one unknown for every unresolved boundary node;
+- every matrix row and column is indexed by a stable boundary-node identity;
+- every coefficient is finite;
+- every right-hand-side value is finite;
+- every non-boundary state used in the system exists in the unified
+  known-state pool;
+- every branch length used to calculate interpolation weights is taken from
+  the original input tree;
+- the coefficient matrix is solvable;
+- the solution contains exactly one finite state estimate for every boundary
+  node;
+- reordering compatible shift entries does not change the biological
+  solution after node identities are restored;
+- unresolved boundary nodes are excluded from the unified known-state pool;
+- the solved boundary system satisfies the numerical residual check defined
+  in Section 10.6.
+
+## 11. Result merging and invariants
+
+After component-level ASR and boundary reconstruction have been completed,
+all ancestral-state estimates are mapped back to the stable internal-node
+identities of the original input tree.
+
+The final patched ancestral-state result is formed from three sources:
+
+1. internal-node estimates from the mother component;
+2. internal-node estimates from all patch components;
+3. reconstructed boundary-node estimates.
+
+Let
+
+$$
+E_{\mathrm{mother}},
+$$
+
+$$
+E_{\mathrm{patch},k},
+$$
+
+and
+
+$$
+E_{\mathrm{boundary}}
+$$
+
+denote the node-indexed estimate sets from the mother component, patch
+component \(k\), and boundary reconstruction, respectively.
+
+The final patched estimate set is
+
+$$
+E_{\mathrm{final}}
+=
+E_{\mathrm{mother}}
+\;\dot\cup\;
+\left(
+\dot\bigcup_{k=1}^{m}
+E_{\mathrm{patch},k}
+\right)
+\;\dot\cup\;
+E_{\mathrm{boundary}}.
+$$
+
+All estimates must be indexed by stable node identity before this union is performed.
+
+### 11.1 Estimate provenance
+
+For transparency, each final ancestral-state estimate should retain its
+computational source.
+
+The `source` field records the computational mechanism by which an estimate
+was obtained.
+
+For version 0.1, the source is conceptually one of:
+
+- `component_asr`, for estimates obtained by applying `asr_fun` to the
+  mother or an internal patch component;
+- `boundary_reconstruction`, for estimates obtained from the boundary
+  reconstruction system.
+
+A separate `component` field identifies the specific phylogenetic component
+associated with the estimate, such as `mother`, `patch_1`, `patch_2`, or
+`boundary`.
+
+This provenance information does not alter the numerical estimate but allows
+the final result to be audited and interpreted.
+
+### 11.2 Merge invariants
+
+Let \(V_{\mathrm{int}}(T)\) denote the complete set of internal nodes in the
+original tree.
+
+The merged result must satisfy
+
+$$
+V(E_{\mathrm{final}})
+=
+V_{\mathrm{int}}(T).
+$$
+
+Furthermore, every original internal node must occur exactly once in the
+final result.
+
+The algorithm must therefore verify that:
+
+- no original internal node is missing;
+- no internal node is duplicated;
+- no unknown or extraneous internal node is present;
+- every internal node has exactly one finite ancestral-state estimate;
+- all node identities map unambiguously to the original tree;
+- every boundary node has been successfully reconstructed;
+- the total number of final estimates equals the number of internal nodes in
+  the original tree.
+  
+If any merge invariant fails, the algorithm must stop and report the
+inconsistency rather than returning an incomplete or ambiguously mapped
+ancestral-state result.
+
+
+## 12. Unsupported configurations
+
+Version 0.1 defines the patching procedure only for configurations that
+satisfy the assumptions and compatibility rules specified above.
+
+Configurations outside this domain must be rejected explicitly rather than
+processed using undefined or implicit behavior.
+
+### 12.1 Unsupported tree and trait configurations
+
+Version 0.1 does not support:
+
+- unrooted phylogenetic trees;
+- non-bifurcating trees or polytomies;
+- trees without branch lengths;
+- trees containing non-finite, zero, or negative branch lengths;
+- duplicated terminal labels;
+- missing terminal trait values;
+- non-finite terminal trait values;
+- trait vectors containing unknown or duplicated terminal identifiers.
+
+These restrictions define the validated input domain of the initial
+implementation and may be relaxed in future versions only after the
+corresponding algorithmic behavior has been formally defined and tested.
+
+### 12.2 Unsupported shift configurations
+
+Version 0.1 does not support:
+
+- shift specifications that do not correspond to an existing directed edge;
+- duplicated shift edges;
+- a root node used as a shift parent;
+- more than one requested shift edge sharing the same boundary parent;
+- nested patch clades;
+- overlapping descendant patch clades.
+
+For multiple shifts, descendant patch components must therefore remain
+pairwise disjoint under the compatibility rule defined in Section 4.
+
+### 12.3 Failure behavior
+
+Unsupported or internally inconsistent configurations must produce an
+informative error before incomplete patched ancestral-state estimates are
+returned.
+
+The implementation must not silently modify the requested shift set, discard
+problematic nodes, substitute another reconstruction rule, or continue with
+only a subset of the requested patches.
+
+Error messages should identify the violated assumption or incompatible
+configuration whenever possible.
+
+## 13. Output object
+
+A successful call to the core patching function returns a structured result
+object representing the complete patched ancestral-state reconstruction.
+
+Conceptually, the primary interface is:
+
+```r
+fit <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = asr_fun
+)
+```
+
+The returned object should have a dedicated S3 class, provisionally named
+`patch_asr`.
+
+The object must retain sufficient information to recover the final ancestral
+states, inspect how the tree was partitioned, and audit the origin of each
+estimate.
+
+### 13.1 Final ancestral-state table
+
+The primary result is a table containing exactly one row for every internal
+node of the original input tree.
+
+At minimum, this table contains:
+
+| Field | Meaning |
+|---|---|
+| `node` | stable internal-node identifier |
+| `estimate` | patched ancestral-state estimate |
+| `source` | computational mechanism producing the estimate |
+| `component` | specific component associated with the estimate |
+
+For version 0.1, `source` is conceptually either `component_asr` or
+`boundary_reconstruction`, whereas `component` identifies the associated
+component, such as `mother`, `patch_1`, `patch_2`, or `boundary`.
+The `source` and `component` fields provide estimate provenance and do not
+alter the numerical ancestral-state estimate.
+
+The final table must satisfy all merge invariants defined in Section 11.
+
+### 13.2 Supporting information
+
+In addition to the final ancestral-state table, the returned object should
+retain the information required to inspect and audit the patching procedure.
+
+Conceptually, the result object may contain:
+
+```r
+fit$ancestral_states
+fit$patch_plan
+fit$boundary_states
+fit$component_states
+fit$node_map
+fit$call
+```
+
+where:
+
+- `ancestral_states` contains the complete final internal-node estimates;
+- `patch_plan` records the validated shift and partition specification;
+- `boundary_states` records reconstructed boundary-node estimates;
+- `component_states` retains component-level ASR results;
+- `node_map` records the correspondence among stable node identifiers,
+  original-tree `ape` node numbers, node type, and original labels when
+  available, thereby allowing derived component nodes to be traced back to
+  the original phylogeny;
+- `call` records the original function call.
+
+The exact internal representation may evolve during implementation, but the
+final ancestral-state estimates and their stable node identities must remain
+unambiguous.
+
+### 13.3 Output-object invariants
+
+A valid output object must satisfy the following conditions:
+
+- `ancestral_states` contains exactly one row per original internal node;
+- all ancestral-state estimates are finite;
+- all node identifiers are unique;
+- every output node maps to exactly one internal node of the original tree;
+- every estimate has a defined computational source;
+- every requested patch is represented in the retained patch plan;
+- every reconstructed boundary node is represented in `boundary_states`;
+- supporting component results are consistent with the final merged result.
+
+The output object must not require simulated true ancestral states,
+simulation parameters, study-specific focal-node labels, benchmarking
+statistics, or comparison-method results as part of the core patching
+algorithm.
