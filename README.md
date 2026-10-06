@@ -3,6 +3,8 @@
 
 # phyloPatch
 
+[![R-CMD-check](https://github.com/Dreabder/phyloPatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Dreabder/phyloPatch/actions/workflows/R-CMD-check.yaml)
+
 `phyloPatch` implements patch-aware ancestral-state reconstruction for
 continuous traits on rooted phylogenetic trees containing one or more
 specified branch-localized shifts.
