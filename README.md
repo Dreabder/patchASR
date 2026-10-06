@@ -129,11 +129,23 @@ does not support components containing only one internal node.
 
 ## Development installation
 
-`phyloPatch` is currently under development and has not yet been
-released as a stable public version.
+`phyloPatch` is currently distributed as a development version from
+GitHub.
 
-From a local source checkout, the development version can be loaded
-with:
+It can be installed with:
+
+``` r
+remotes::install_github("Dreabder/phyloPatch")
+```
+
+or, if `devtools` is already installed:
+
+``` r
+devtools::install_github("Dreabder/phyloPatch")
+```
+
+For package development from a local source checkout, the working copy
+can be loaded with:
 
 ``` r
 devtools::load_all(".")
