@@ -35,9 +35,104 @@ reconstruction on the resulting components, reconstruct the boundary
 node connecting those components, and finally merge all estimates back
 onto the internal nodes of the original tree.
 
+## Development installation
+
+`phyloPatch` is currently distributed as a development version from
+GitHub.
+
+It can be installed with:
+
+```r
+remotes::install_github("Dreabder/phyloPatch")
+```
+
+or, if `devtools` is already installed:
+
+```r
+devtools::install_github("Dreabder/phyloPatch")
+```
+
+For package development from a local source checkout, the working copy
+can be loaded with:
+
+```r
+devtools::load_all(".")
+```
+## Minimal example
+
+The following example uses a simple toy ancestral-state reconstruction
+backend to demonstrate the `phyloPatch` interface.
+
+The toy backend is used only for illustrating package mechanics; it is
+not intended as a biological ancestral-state reconstruction method.
+
+```{r example}
+library(ape)
+
+tree <- read.tree(
+  text = paste0(
+    "((((A:1,B:1)J:1,C:1)I:1,D:1)H:1,",
+    "(E:1,F:1)K:1)ROOT;"
+  )
+)
+
+states <- c(
+  A = 1,
+  B = 2,
+  C = 3,
+  D = 4,
+  E = 5,
+  F = 6
+)
+
+I_node <- Ntip(tree) + match("I", tree$node.label)
+J_node <- Ntip(tree) + match("J", tree$node.label)
+
+shifts <- data.frame(
+  parent = I_node,
+  child = J_node
+)
+
+mean_backend <- function(tree, states) {
+
+  stopifnot(identical(names(states), tree$tip.label))
+
+  stats::setNames(
+    rep(
+      mean(states),
+      tree$Nnode
+    ),
+    tree$node.label
+  )
+}
+
+fit <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = mean_backend
+)
+
+fit
+```
+
+The final ancestral-state estimates can be inspected with:
+
+```{r example-results}
+fit$ancestral_states
+```
+
+The result records both the numerical estimate and its provenance.
+Component-level estimates use `source = "component_asr"`, whereas
+reconstructed boundary nodes use
+`source = "boundary_reconstruction"`.
+
+Component provenance is recorded separately, for example as `mother`,
+`patch_1`, or `boundary`.
+
 ## Core workflow
 
-For a specified shift edge from parent node \(I\) to child node \(J\),
+For a specified shift edge from parent node `I` to child node `J`,
 `phyloPatch` performs the following operations:
 
 1. validates the phylogeny, observed terminal states, shift edges, and
@@ -73,9 +168,8 @@ The current implementation supports:
 - finite and strictly positive branch lengths;
 - continuous traits;
 - one finite observed trait value for every terminal taxon;
-- internal or terminal shift children;
-- one or more compatible shift edges; and
-- multiple shifts whose descendant patch sets are pairwise disjoint.
+- internal or terminal shift children; and
+- one or more compatible shift edges.
 
 The shift parent must be an internal node and cannot be the root. Each
 shift parent may define at most one patch region.
@@ -142,133 +236,6 @@ With the same input and base seed, repeated analyses are reproducible,
 and compatible multiple-shift analyses are invariant to the row order of
 the supplied shift table. The current `phytools::anc.Bayes()` adapter
 does not support components containing only one internal node.
-
-## Development installation
-
-`phyloPatch` is currently distributed as a development version from
-GitHub.
-
-It can be installed with:
-
-```r
-remotes::install_github("Dreabder/phyloPatch")
-```
-
-or, if `devtools` is already installed:
-
-```r
-devtools::install_github("Dreabder/phyloPatch")
-```
-
-For package development from a local source checkout, the working copy
-can be loaded with:
-
-```r
-devtools::load_all(".")
-```
-
-## Minimal example
-
-The following example uses a simple toy ancestral-state reconstruction
-backend to demonstrate the `phyloPatch` interface.
-
-The toy backend is used only for illustrating package mechanics; it is
-not intended as a biological ancestral-state reconstruction method.
-
-```{r example}
-library(ape)
-
-tree <- read.tree(
-  text = paste0(
-    "((((A:1,B:1)J:1,C:1)I:1,D:1)H:1,",
-    "(E:1,F:1)K:1)ROOT;"
-  )
-)
-
-states <- c(
-  A = 1,
-  B = 2,
-  C = 3,
-  D = 4,
-  E = 5,
-  F = 6
-)
-
-I_node <- Ntip(tree) +
-  match(
-    "I",
-    tree$node.label
-  )
-
-J_node <- Ntip(tree) +
-  match(
-    "J",
-    tree$node.label
-  )
-
-shifts <- data.frame(
-  parent = I_node,
-  child = J_node
-)
-
-mean_backend <- function(
-    tree,
-    states
-) {
-
-  stopifnot(
-    identical(
-      names(states),
-      tree$tip.label
-    )
-  )
-
-  stats::setNames(
-    rep(
-      mean(states),
-      tree$Nnode
-    ),
-    tree$node.label
-  )
-}
-
-fit <- patch_asr(
-  tree = tree,
-  states = states,
-  shifts = shifts,
-  asr_fun = mean_backend
-)
-
-fit
-```
-
-The final ancestral-state estimates can be inspected with:
-
-```{r example-results}
-fit$ancestral_states
-```
-
-The result records both the numerical estimate and its provenance.
-
-For example, component-level ancestral-state estimates are labelled:
-
-```text
-source = component_asr
-```
-
-whereas reconstructed boundary nodes are labelled:
-
-```text
-source = boundary_reconstruction
-```
-
-The corresponding component is recorded separately, for example:
-
-```text
-mother
-patch_1
-boundary
-```
 
 ### Using the built-in backends
 
@@ -439,42 +406,19 @@ be used externally as comparison or benchmark methods.
 
 ## Development status
 
-`phyloPatch` is currently distributed as a development version.
+`phyloPatch` is currently distributed as a development version
+(`0.0.0.9000`).
 
-The automated test suite covers:
+The package includes automated tests covering input validation, stable
+node identity, tree partitioning, component-wise reconstruction,
+boundary reconstruction, result merging, built-in ASR adapters,
+Bayesian reproducibility, and multiple-shift row-order invariance.
 
-- input validation;
-- stable node identity;
-- patch-plan construction;
-- internal and terminal patches;
-- multiple compatible shifts;
-- tree partitioning;
-- component-wise reconstruction;
-- single and coupled boundary reconstruction;
-- result merging;
-- built-in ASR adapters;
-- Bayesian random-number-state preservation and reproducibility;
-- multiple-shift row-order invariance; and
-- the public `patch_asr()` interface.
+Numerical regression tests against the original research implementation
+and direct backend calculations have also been performed. Detailed
+algorithmic specifications and validation information are provided in
+the package vignette.
 
-Development-level numerical regression tests have additionally compared
-the refactored package implementation with the original research
-implementation for deterministic PIC, ML-BM, GLS-BM, and
-Rphylopars-BM reconstruction on a 128-tip simulation case. All four
-methods reproduced the original patched ancestral-state estimates within
-the prespecified numerical tolerance.
-
-The Bayesian adapter has also been validated against direct
-`phytools::anc.Bayes()` output using the same component-specific random
-seeds, burn-in handling, internal-node mapping, and posterior-mean
-calculation. In the validation case, adapter and direct calculations
-were identical at every reconstructed node.
-
-For a controlled two-shift test case, reversing the row order of the
-shift table produced identical final estimates for PIC, ML-BM, GLS-BM,
-Rphylopars-BM, and Bayesian reconstruction.
-
-These checks are software-validation tests and should not be interpreted
-as general biological-performance benchmarks or as substitutes for
-method-specific statistical diagnostics such as MCMC convergence
-assessment.
+See the
+[patching algorithm specification](vignettes/patching-algorithm-specification.Rmd)
+for further details.
