@@ -2,7 +2,7 @@
 
 ## ============================================================
 ## Numerical regression:
-## legacy patch implementation vs phyloPatch
+## legacy patch implementation vs patchASR
 ##
 ## Dataset:
 ##   BM/balanced/jump_16/rep_001
@@ -34,7 +34,7 @@ legacy_file <- file.path(
 
 new_file <- file.path(
   case_dir,
-  "phylopatch_patch_4methods.csv"
+  "patchASR_patch_4methods.csv"
 )
 
 trait_file <- file.path(
@@ -44,12 +44,12 @@ trait_file <- file.path(
 
 summary_file <- file.path(
   case_dir,
-  "legacy_vs_phylopatch_4methods_summary.csv"
+  "legacy_vs_patchASR_4methods_summary.csv"
 )
 
 nodewise_file <- file.path(
   case_dir,
-  "legacy_vs_phylopatch_4methods_nodewise.csv"
+  "legacy_vs_patchASR_4methods_nodewise.csv"
 )
 
 
@@ -116,7 +116,7 @@ cat(
 )
 
 cat(
-  "phyloPatch rows: ",
+  "patchASR rows: ",
   nrow(new),
   "\n",
   sep = ""
@@ -139,7 +139,7 @@ if (!"node_id" %in%
     names(new)) {
 
   stop(
-    "phyloPatch result has no `node_id` column."
+    "patchASR result has no `node_id` column."
   )
 }
 
@@ -180,7 +180,7 @@ if (anyDuplicated(
 )) {
 
   stop(
-    "phyloPatch result contains duplicated node_id values."
+    "patchASR result contains duplicated node_id values."
   )
 }
 
@@ -201,8 +201,8 @@ if (!setequal(
   )
 
   stop(
-    "Legacy and phyloPatch node sets differ.\n",
-    "Missing from phyloPatch: ",
+    "Legacy and patchASR node sets differ.\n",
+    "Missing from patchASR: ",
     paste(
       missing_from_new,
       collapse = ", "
@@ -321,7 +321,7 @@ legacy_rph_col <- find_one_column(
 
 
 ## ------------------------------------------------------------
-## Required phyloPatch columns
+## Required patchASR columns
 ## ------------------------------------------------------------
 
 new_columns <- c(
@@ -339,7 +339,7 @@ missing_new_columns <- setdiff(
 if (length(missing_new_columns) > 0L) {
 
   stop(
-    "phyloPatch output is missing expected column(s): ",
+    "patchASR output is missing expected column(s): ",
     paste(
       missing_new_columns,
       collapse = ", "
@@ -484,7 +484,7 @@ for (method in
 
     stop(
       method,
-      ": phyloPatch result contains non-finite values."
+      ": patchASR result contains non-finite values."
     )
   }
 
@@ -574,7 +574,7 @@ for (method in
 
   nodewise[[
       paste0(
-        "phylopatch_",
+        "patchASR_",
         prefix
       )]] <- new_values
 
@@ -626,7 +626,7 @@ write.csv(
 
 cat(
   "\n============================================================\n",
-  "LEGACY vs phyloPatch NUMERICAL REGRESSION\n",
+  "LEGACY vs patchASR NUMERICAL REGRESSION\n",
   "============================================================\n",
   sep = ""
 )

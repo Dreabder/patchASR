@@ -234,12 +234,12 @@ standardize_ape_ace_result <- function(
 #' Runs continuous-trait ancestral-state reconstruction with
 #' `ape::ace(method = "pic")` and maps the resulting component-tree
 #' estimates to the stable internal-node identifiers used by
-#' `phyloPatch`.
+#' `patchASR`.
 #'
 #' This function satisfies the `asr_fun(tree, states)` interface required
 #' by [patch_asr()].
 #'
-#' @param tree A component phylogeny supplied by `phyloPatch`.
+#' @param tree A component phylogeny supplied by `patchASR`.
 #' @param states A named numeric vector of terminal states in exact
 #'   `tree$tip.label` order.
 #'

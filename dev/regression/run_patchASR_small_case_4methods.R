@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 ## ============================================================
-## phyloPatch deterministic regression
+## patchASR deterministic regression
 ##
 ## Same exact dataset and shift as the legacy reference.
 ## ============================================================
@@ -23,7 +23,7 @@ if (!requireNamespace(
 
 
 ## ------------------------------------------------------------
-## Load current development version of phyloPatch
+## Load current development version of patchASR
 ## ------------------------------------------------------------
 
 pkgload::load_all(
@@ -49,7 +49,7 @@ trait_file <- file.path(
 
 output_file <- file.path(
   case_dir,
-  "phylopatch_patch_4methods.csv"
+  "patchASR_patch_4methods.csv"
 )
 
 
@@ -212,7 +212,7 @@ cat(
 
 
 ## ------------------------------------------------------------
-## Run phyloPatch
+## Run patchASR
 ## ------------------------------------------------------------
 
 fit_pic <- patch_asr(
@@ -341,7 +341,7 @@ if (nrow(result) !=
     tree$Nnode) {
 
   stop(
-    "phyloPatch output contains an unexpected number of nodes."
+    "patchASR output contains an unexpected number of nodes."
   )
 }
 
@@ -363,7 +363,7 @@ if (any(
 )) {
 
   stop(
-    "phyloPatch regression output contains NA/Inf."
+    "patchASR regression output contains NA/Inf."
   )
 }
 
@@ -379,7 +379,7 @@ write.csv(
 )
 
 cat(
-  "phyloPatch deterministic regression completed.\n"
+  "patchASR deterministic regression completed.\n"
 )
 
 cat(

@@ -1,5 +1,5 @@
 # Component-wise ancestral-state reconstruction infrastructure
-# for phyloPatch.
+# for patchASR.
 
 
 #' Prepare observed states for one phylogenetic component
@@ -372,12 +372,12 @@ component_estimate_table <- function(
 
 #' Run component-wise ASR across an entire partition
 #'
-#' @param partition A `phyloPatch_partition` object.
+#' @param partition A `patchASR_partition` object.
 #' @param states Named numeric observed terminal states from the
 #'   original tree.
 #' @param asr_fun Standardized component-level ASR backend.
 #'
-#' @return A `phyloPatch_component_asr` object.
+#' @return A `patchASR_component_asr` object.
 #'
 #' @noRd
 run_partition_asr <- function(
@@ -388,10 +388,10 @@ run_partition_asr <- function(
 
   if (!inherits(
     partition,
-    "phyloPatch_partition"
+    "patchASR_partition"
   )) {
     stop(
-      "`partition` must be a valid phyloPatch partition object.",
+      "`partition` must be a valid patchASR partition object.",
       call. = FALSE
     )
   }
@@ -625,6 +625,6 @@ run_partition_asr <- function(
         estimate_table
     ),
     class =
-      "phyloPatch_component_asr"
+      "patchASR_component_asr"
   )
 }

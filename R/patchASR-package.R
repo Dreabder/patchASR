@@ -1,7 +1,7 @@
-#' phyloPatch: Patch-Aware Ancestral State Reconstruction
+#' patchASR: Patch-Based Ancestral State Reconstruction Across Branch-Localized Changes
 #'
 #' @description
-#' `phyloPatch` provides infrastructure for patch-aware ancestral-state
+#' `patchASR` provides infrastructure for patch-aware ancestral-state
 #' reconstruction of continuous traits on phylogenetic trees containing
 #' one or more specified branch-localized shifts.
 #'
@@ -47,7 +47,7 @@
 #'
 #' @section Ancestral-state reconstruction backend:
 #'
-#' `phyloPatch` is independent of any particular ancestral-state
+#' `patchASR` is independent of any particular ancestral-state
 #' reconstruction method. Users provide an `asr_fun` function with the
 #' standardized interface `asr_fun(tree, states)`.
 #'
@@ -73,7 +73,7 @@
 #' @section Node identity and provenance:
 #'
 #' Original `ape` node numbers are used only as references to the exact
-#' input tree. Before tree modification, `phyloPatch` assigns package-level
+#' input tree. Before tree modification, `patchASR` assigns package-level
 #' stable node identifiers so that biological node identity can be retained
 #' across pruning, subtree extraction, and local node renumbering.
 #'

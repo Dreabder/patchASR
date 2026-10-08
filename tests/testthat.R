@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-library(phyloPatch)
+library(patchASR)
 
-test_check("phyloPatch")
+test_check("patchASR")

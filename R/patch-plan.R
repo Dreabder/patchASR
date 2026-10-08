@@ -1,4 +1,4 @@
-# Patch-plan construction infrastructure for phyloPatch.
+# Patch-plan construction infrastructure for patchASR.
 #
 # A patch plan freezes all topology and branch-length information required
 # for later tree partitioning and boundary reconstruction.
@@ -543,6 +543,6 @@ build_patch_plan <- function(
       patch_tip_labels = patch_tip_labels,
       patch_internal_ids = patch_internal_ids
     ),
-    class = "phyloPatch_patch_plan"
+    class = "patchASR_patch_plan"
   )
 }

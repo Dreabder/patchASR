@@ -523,7 +523,7 @@ test_that(
 
     expect_s3_class(
       result,
-      "phyloPatch_component_asr"
+      "patchASR_component_asr"
     )
 
     expect_equal(

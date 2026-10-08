@@ -7,7 +7,7 @@
 asr_ape_pic(tree, states)
 }
 \arguments{
-\item{tree}{A component phylogeny supplied by \code{phyloPatch}.}
+\item{tree}{A component phylogeny supplied by \code{patchASR}.}
 
 \item{states}{A named numeric vector of terminal states in exact
 \code{tree$tip.label} order.}
@@ -20,7 +20,7 @@ internal node of \code{tree}.
 Runs continuous-trait ancestral-state reconstruction with
 \code{ape::ace(method = "pic")} and maps the resulting component-tree
 estimates to the stable internal-node identifiers used by
-\code{phyloPatch}.
+\code{patchASR}.
 }
 \details{
 This function satisfies the \code{asr_fun(tree, states)} interface required

@@ -263,22 +263,22 @@ test_that(
 
     expect_s3_class(
       fit$patch_plan,
-      "phyloPatch_patch_plan"
+      "patchASR_patch_plan"
     )
 
     expect_s3_class(
       fit$diagnostics$partition,
-      "phyloPatch_partition"
+      "patchASR_partition"
     )
 
     expect_s3_class(
       fit$diagnostics$component_asr,
-      "phyloPatch_component_asr"
+      "patchASR_component_asr"
     )
 
     expect_s3_class(
       fit$diagnostics$boundary_result,
-      "phyloPatch_boundary_result"
+      "patchASR_boundary_result"
     )
 
     expect_lt(

@@ -237,7 +237,7 @@ if (!check_edge(
 ## ------------------------------------------------------------
 ## Remove the temporary biological labels.
 ##
-## phyloPatch should work from original ape node numbers and
+## patchASR should work from original ape node numbers and
 ## create its own stable working identity internally.
 ## ------------------------------------------------------------
 

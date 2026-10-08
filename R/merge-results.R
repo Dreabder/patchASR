@@ -1,4 +1,4 @@
-# Final ancestral-state result merging for phyloPatch.
+# Final ancestral-state result merging for patchASR.
 
 
 #' Validate one ancestral-state estimate table
@@ -140,20 +140,20 @@ merge_ancestral_results <- function(
 
   if (!inherits(
     component_asr,
-    "phyloPatch_component_asr"
+    "patchASR_component_asr"
   )) {
     stop(
-      "`component_asr` must be a valid phyloPatch component-ASR object.",
+      "`component_asr` must be a valid patchASR component-ASR object.",
       call. = FALSE
     )
   }
 
   if (!inherits(
     boundary_result,
-    "phyloPatch_boundary_result"
+    "patchASR_boundary_result"
   )) {
     stop(
-      "`boundary_result` must be a valid phyloPatch boundary result.",
+      "`boundary_result` must be a valid patchASR boundary result.",
       call. = FALSE
     )
   }

@@ -1,7 +1,8 @@
-^phyloPatch\.Rproj$
+^patchASR\.Rproj$
 ^\.Rproj\.user$
 ^dev$
 ^LICENSE\.md$
 ^README\.Rmd$
 ^doc$
 ^Meta$
+^\.github$

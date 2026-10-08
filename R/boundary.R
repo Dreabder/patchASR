@@ -1,4 +1,4 @@
-# Boundary-state reconstruction infrastructure for phyloPatch.
+# Boundary-state reconstruction infrastructure for patchASR.
 #
 # Boundary nodes are reconstructed jointly from original-tree branch
 # geometry and the unified pool of already known component and terminal
@@ -75,10 +75,10 @@ build_unified_known_states <- function(
 
   if (!inherits(
     component_asr,
-    "phyloPatch_component_asr"
+    "patchASR_component_asr"
   )) {
     stop(
-      "`component_asr` must be a valid phyloPatch component-ASR object.",
+      "`component_asr` must be a valid patchASR component-ASR object.",
       call. = FALSE
     )
   }
@@ -317,10 +317,10 @@ build_boundary_system <- function(
 
   if (!inherits(
     patch_plan,
-    "phyloPatch_patch_plan"
+    "patchASR_patch_plan"
   )) {
     stop(
-      "`patch_plan` must be a valid phyloPatch patch-plan object.",
+      "`patch_plan` must be a valid patchASR patch-plan object.",
       call. = FALSE
     )
   }
@@ -588,7 +588,7 @@ build_boundary_system <- function(
         )
     ),
     class =
-      "phyloPatch_boundary_system"
+      "patchASR_boundary_system"
   )
 }
 
@@ -608,10 +608,10 @@ solve_boundary_system <- function(
 
   if (!inherits(
     boundary_system,
-    "phyloPatch_boundary_system"
+    "patchASR_boundary_system"
   )) {
     stop(
-      "`boundary_system` must be a valid phyloPatch boundary system.",
+      "`boundary_system` must be a valid patchASR boundary system.",
       call. = FALSE
     )
   }
@@ -799,7 +799,7 @@ boundary_estimate_table <- function(
 #' @param component_asr Component-level reconstruction result.
 #' @param residual_tolerance Maximum allowed absolute residual.
 #'
-#' @return A `phyloPatch_boundary_result` object.
+#' @return A `patchASR_boundary_result` object.
 #'
 #' @noRd
 run_boundary_reconstruction <- function(
@@ -888,6 +888,6 @@ run_boundary_reconstruction <- function(
         solved$residual_vector
     ),
     class =
-      "phyloPatch_boundary_result"
+      "patchASR_boundary_result"
   )
 }

@@ -7,7 +7,7 @@
 asr_ape_ml_bm(tree, states)
 }
 \arguments{
-\item{tree}{A component phylogeny supplied by \code{phyloPatch}.}
+\item{tree}{A component phylogeny supplied by \code{patchASR}.}
 
 \item{states}{A named numeric vector of terminal states in exact
 \code{tree$tip.label} order.}

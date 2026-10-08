@@ -278,7 +278,7 @@ test_that(
 
     expect_s3_class(
       result,
-      "phyloPatch_boundary_result"
+      "patchASR_boundary_result"
     )
 
     ## H1 = 20
@@ -721,7 +721,7 @@ test_that(
           data.frame()
       ),
       class =
-        "phyloPatch_boundary_system"
+        "patchASR_boundary_system"
     )
 
     expect_error(

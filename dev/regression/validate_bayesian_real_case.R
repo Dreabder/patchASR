@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 ## ============================================================
-## Bayesian reproducibility validation for phyloPatch
+## Bayesian reproducibility validation for patchASR
 ##
 ## Real dataset:
 ##   BM/balanced/jump_16/rep_001
@@ -46,7 +46,7 @@ if (!requireNamespace(
 
 
 ## ------------------------------------------------------------
-## Load current development version of phyloPatch
+## Load current development version of patchASR
 ## ------------------------------------------------------------
 
 pkgload::load_all(

@@ -8,7 +8,7 @@
 ##   under the Rphylopars version installed on this machine.
 ##
 ## This is a development audit only.
-## It does NOT modify phyloPatch.
+## It does NOT modify patchASR.
 ## ============================================================
 
 
@@ -43,7 +43,7 @@ audit_one_rphylopars_case <- function(
   )
 
   ## ----------------------------------------------------------
-  ## Assign stable labels similar to those used by phyloPatch
+  ## Assign stable labels similar to those used by patchASR
   ## ----------------------------------------------------------
 
   stable_ids <- paste0(

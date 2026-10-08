@@ -2,7 +2,7 @@
 
 ## ============================================================
 ## Audit Rphylopars node identities on REAL components passed
-## by phyloPatch::patch_asr()
+## by patchASR::patch_asr()
 ##
 ## IMPORTANT:
 ## This script is diagnostic only.
@@ -44,7 +44,7 @@ if (!requireNamespace(
 
 
 ## ------------------------------------------------------------
-## Load current development version of phyloPatch
+## Load current development version of patchASR
 ## ------------------------------------------------------------
 
 pkgload::load_all(
@@ -581,7 +581,7 @@ cat(
 )
 
 
-audit_result <- phyloPatch::patch_asr(
+audit_result <- patchASR::patch_asr(
   tree = tree,
   states = states,
   shifts = shifts,

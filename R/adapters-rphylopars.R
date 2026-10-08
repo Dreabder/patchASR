@@ -97,14 +97,14 @@ make_asr_rphylopars_bm <- function(
 
     rph_tree$tip.label <-
       paste0(
-        "phylopatch_tip_",
+        "patchASR_tip_",
         seq_len(
           ape::Ntip(rph_tree)
         )
       )
 
 
-    ## Rphylopars does not need phyloPatch stable internal labels.
+    ## Rphylopars does not need patchASR stable internal labels.
     ## Remove them from the temporary working copy so that local
     ## ape node identity is the only internal-node convention
     ## relevant to this backend.
@@ -354,7 +354,7 @@ make_asr_rphylopars_bm <- function(
 
 
     ## --------------------------------------------------------
-    ## Restore phyloPatch stable biological node identity
+    ## Restore patchASR stable biological node identity
     ## --------------------------------------------------------
 
     stats::setNames(

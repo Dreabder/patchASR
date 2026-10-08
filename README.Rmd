@@ -16,11 +16,11 @@ pkgload::load_all(
 )
 ```
 
-# phyloPatch
+# patchASR
 
-[![R-CMD-check](https://github.com/Dreabder/phyloPatch/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Dreabder/phyloPatch/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/Dreabder/patchASR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Dreabder/patchASR/actions/workflows/R-CMD-check.yaml)
 
-`phyloPatch` implements patch-aware ancestral-state reconstruction
+`patchASR` implements patch-aware ancestral-state reconstruction
 for continuous traits on rooted phylogenetic trees containing one or
 more specified branch-localized shifts.
 
@@ -37,19 +37,19 @@ onto the internal nodes of the original tree.
 
 ## Development installation
 
-`phyloPatch` is currently distributed as a development version from
+`patchASR` is currently distributed as a development version from
 GitHub.
 
 It can be installed with:
 
 ```r
-remotes::install_github("Dreabder/phyloPatch")
+remotes::install_github("Dreabder/patchASR")
 ```
 
 or, if `devtools` is already installed:
 
 ```r
-devtools::install_github("Dreabder/phyloPatch")
+devtools::install_github("Dreabder/patchASR")
 ```
 
 For package development from a local source checkout, the working copy
@@ -61,7 +61,7 @@ devtools::load_all(".")
 ## Minimal example
 
 The following example uses a simple toy ancestral-state reconstruction
-backend to demonstrate the `phyloPatch` interface.
+backend to demonstrate the `patchASR` interface.
 
 The toy backend is used only for illustrating package mechanics; it is
 not intended as a biological ancestral-state reconstruction method.
@@ -112,7 +112,7 @@ Component provenance is recorded separately, for example as `mother`,
 ## Core workflow
 
 For a specified shift edge from parent node `I` to child node `J`,
-`phyloPatch` performs the following operations:
+`patchASR` performs the following operations:
 
 1. validates the phylogeny, observed terminal states, shift edges, and
    ancestral-state reconstruction backend;
@@ -160,7 +160,7 @@ heuristically.
 
 ## Ancestral-state reconstruction backend
 
-`phyloPatch` is not tied to one particular ancestral-state
+`patchASR` is not tied to one particular ancestral-state
 reconstruction method.
 
 Users provide an ancestral-state reconstruction function with the
@@ -187,7 +187,7 @@ adapters.
 
 ### Built-in ASR backends
 
-`phyloPatch` currently provides five built-in ancestral-state
+`patchASR` currently provides five built-in ancestral-state
 reconstruction interfaces:
 
 - `asr_ape_pic()` performs PIC-style reconstruction using
@@ -354,7 +354,7 @@ fit$diagnostics
 
 ## Methodological boundaries
 
-`phyloPatch` deliberately separates the patching algorithm from the
+`patchASR` deliberately separates the patching algorithm from the
 ancestral-state reconstruction method itself.
 
 The core package therefore handles:
@@ -380,12 +380,12 @@ set of internal-node estimates, the analysis stops with an error instead
 of silently switching to another reconstruction method.
 
 StableTraits or StableTrait-based reconstruction is not part of the
-patching algorithm implemented by `phyloPatch`; such methods may instead
+patching algorithm implemented by `patchASR`; such methods may instead
 be used externally as comparison or benchmark methods.
 
 ## Development status
 
-`phyloPatch` is currently distributed as a development version
+`patchASR` is currently distributed as a development version
 (`0.0.0.9000`).
 
 The package includes automated tests covering input validation, stable

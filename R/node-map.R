@@ -1,4 +1,4 @@
-# Stable node-identity infrastructure for phyloPatch.
+# Stable node-identity infrastructure for patchASR.
 #
 # All biological node identities are defined relative to the original
 # input tree. Derived trees may use different local ape node numbers.
@@ -125,7 +125,7 @@ freeze_node_identity <- function(tree) {
 #' Map derived component nodes back to the original tree
 #'
 #' @param component_tree A derived phylogenetic component whose internal
-#'   node labels contain stable `phyloPatch` identifiers.
+#'   node labels contain stable `patchASR` identifiers.
 #' @param node_map The original-tree node map produced by
 #'   `freeze_node_identity()`.
 #'

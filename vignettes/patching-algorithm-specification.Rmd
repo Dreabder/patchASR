@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 ## Scope
 
 This document defines the computational specification of the phylogenetic
-patching algorithm implemented in `phyloPatch`.
+patching algorithm implemented in `patchASR`.
 
 The algorithm is designed to perform ancestral-state reconstruction (ASR)
 after partitioning a phylogeny across one or more designated shift edges.
@@ -653,7 +653,7 @@ Instead, method-specific adapter functions are responsible for:
 1. calling the external ASR implementation;
 2. extracting its internal-node estimates;
 3. mapping method-specific or local node identifiers to the stable node
-   identities used by `phyloPatch`;
+   identities used by `patchASR`;
 4. validating the resulting estimate vector; and
 5. returning the standardized named numeric vector required by the
    patching algorithm.

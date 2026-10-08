@@ -1,4 +1,4 @@
-# Tree-partition infrastructure for phyloPatch.
+# Tree-partition infrastructure for patchASR.
 #
 # The original phylogeny is partitioned into one mother component,
 # zero or more internal patch trees, terminal patch representations,
@@ -299,7 +299,7 @@ build_partition_patch_component <- function(
 #' @param node_map Stable original-tree node map.
 #' @param patch_plan Patch plan produced by `build_patch_plan()`.
 #'
-#' @return An internal `phyloPatch_partition` object.
+#' @return An internal `patchASR_partition` object.
 #'
 #' @noRd
 partition_phylogeny <- function(
@@ -318,10 +318,10 @@ partition_phylogeny <- function(
 
   if (!inherits(
     patch_plan,
-    "phyloPatch_patch_plan"
+    "patchASR_patch_plan"
   )) {
     stop(
-      "`patch_plan` must be a valid phyloPatch patch-plan object.",
+      "`patch_plan` must be a valid patchASR patch-plan object.",
       call. = FALSE
     )
   }
@@ -659,6 +659,6 @@ partition_phylogeny <- function(
         patch_tip_ids
     ),
     class =
-      "phyloPatch_partition"
+      "patchASR_partition"
   )
 }

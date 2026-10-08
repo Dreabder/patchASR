@@ -1,5 +1,5 @@
-Package: phyloPatch
-Title: Patch-Aware Ancestral State Reconstruction for Branch-Localized Shifts
+Package: patchASR
+Title: Patch-Based Ancestral State Reconstruction Across Branch-Localized Changes
 Version: 0.0.0.9000
 Authors@R:
     person(
@@ -17,8 +17,8 @@ Description: Implements patch-aware ancestral state reconstruction for
     branch lengths from the original phylogeny, after which component and
     boundary estimates are merged back onto the internal nodes of the
     original tree while preserving node identity and estimate provenance.
-URL: https://github.com/Dreabder/phyloPatch
-BugReports: https://github.com/Dreabder/phyloPatch/issues
+URL: https://github.com/Dreabder/patchASR
+BugReports: https://github.com/Dreabder/patchASR/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

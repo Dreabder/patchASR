@@ -1,4 +1,4 @@
-# Input validation infrastructure for phyloPatch.
+# Input validation infrastructure for patchASR.
 
 
 #' Identify the root node of a rooted phylogeny

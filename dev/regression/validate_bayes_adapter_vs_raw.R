@@ -2,7 +2,7 @@
 
 ## ============================================================
 ## Direct validation:
-## phyloPatch Bayesian adapter
+## patchASR Bayesian adapter
 ## versus
 ## raw phytools::anc.Bayes posterior means
 ##
@@ -50,7 +50,7 @@ if (!requireNamespace(
 
 
 ## ------------------------------------------------------------
-## Load current phyloPatch development version
+## Load current patchASR development version
 ## ------------------------------------------------------------
 
 pkgload::load_all(
@@ -246,12 +246,12 @@ cat(
 stable_component_seed_fun <-
   getFromNamespace(
     "stable_component_seed",
-    "phyloPatch"
+    "patchASR"
   )
 
 
 ## ------------------------------------------------------------
-## Official phyloPatch Bayesian backend
+## Official patchASR Bayesian backend
 ## ------------------------------------------------------------
 
 official_backend <-
@@ -475,7 +475,7 @@ run_raw_bayes <- function(
 ## patch_asr() constructs the REAL mother and patch components.
 ## Each component is independently evaluated by:
 ##
-##   official phyloPatch adapter
+##   official patchASR adapter
 ##   versus
 ##   direct raw anc.Bayes calculation
 ## ============================================================

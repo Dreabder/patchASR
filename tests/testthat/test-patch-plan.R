@@ -105,7 +105,7 @@ test_that(
 
     expect_s3_class(
       plan,
-      "phyloPatch_patch_plan"
+      "patchASR_patch_plan"
     )
 
     expect_equal(

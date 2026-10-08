@@ -1,4 +1,4 @@
-# User-facing orchestration for phyloPatch.
+# User-facing orchestration for patchASR.
 
 
 #' Patch-aware ancestral-state reconstruction
@@ -219,7 +219,7 @@ print.patch_asr <- function(
   n_patches <-
     if (inherits(
       x$patch_plan,
-      "phyloPatch_patch_plan"
+      "patchASR_patch_plan"
     )) {
       x$patch_plan$n_patches
     } else {

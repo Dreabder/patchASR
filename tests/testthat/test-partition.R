@@ -141,7 +141,7 @@ test_that(
 
     expect_s3_class(
       partition,
-      "phyloPatch_partition"
+      "patchASR_partition"
     )
 
     expect_equal(
