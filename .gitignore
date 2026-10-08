@@ -6,7 +6,8 @@
 *.tar.gz
 *.Rcheck
 
-cat >> .gitignore <<'EOF'
+/doc/
+/Meta/
 
 # Development-generated outputs
 dev/**/*.log
@@ -14,9 +15,7 @@ dev/**/*_output.txt
 dev/**/*_audit.txt
 dev/**/*_nodewise.csv
 dev/**/*_summary.csv
+dev/regression/results/
 
 # Local development backups
 R/*.before_*
-EOF
-/doc/
-/Meta/

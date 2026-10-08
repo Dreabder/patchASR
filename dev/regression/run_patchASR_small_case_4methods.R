@@ -32,10 +32,15 @@ pkgload::load_all(
 )
 
 
-case_dir <- paste0(
-  "/home/chengyq/work/ASE/data/jump_simu/simu/",
-  "BM/balanced/jump_16/rep_001"
+source(
+  file.path(
+    "dev",
+    "regression",
+    "regression_paths.R"
+  )
 )
+
+case_dir <- fixture_dir
 
 tree_file <- file.path(
   case_dir,
@@ -48,7 +53,7 @@ trait_file <- file.path(
 )
 
 output_file <- file.path(
-  case_dir,
+  results_dir,
   "patchASR_patch_4methods.csv"
 )
 

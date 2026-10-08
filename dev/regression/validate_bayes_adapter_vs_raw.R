@@ -63,10 +63,15 @@ pkgload::load_all(
 ## Files
 ## ------------------------------------------------------------
 
-case_dir <- paste0(
-  "/home/chengyq/work/ASE/data/jump_simu/simu/",
-  "BM/balanced/jump_16/rep_001"
+source(
+  file.path(
+    "dev",
+    "regression",
+    "regression_paths.R"
+  )
 )
+
+case_dir <- fixture_dir
 
 tree_file <- file.path(
   case_dir,
@@ -79,12 +84,12 @@ trait_file <- file.path(
 )
 
 component_summary_file <- file.path(
-  case_dir,
+  results_dir,
   "bayesian_adapter_vs_raw_component_summary.csv"
 )
 
 nodewise_file <- file.path(
-  case_dir,
+  results_dir,
   "bayesian_adapter_vs_raw_nodewise.csv"
 )
 

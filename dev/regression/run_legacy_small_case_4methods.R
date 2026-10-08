@@ -16,15 +16,37 @@
 ## ============================================================
 
 
-legacy_script <- paste0(
-  "/home/chengyq/work/ASE/code/jump_simu/",
-  "asr/asr_BM_patch_n.R"
+legacy_script <- Sys.getenv(
+  "PATCHASR_LEGACY_SCRIPT",
+  unset = ""
 )
 
-case_dir <- paste0(
-  "/home/chengyq/work/ASE/data/jump_simu/simu/",
-  "BM/balanced/jump_16/rep_001"
+if (!nzchar(legacy_script)) {
+  stop(
+    paste0(
+      "To regenerate the frozen legacy reference, set the ",
+      "PATCHASR_LEGACY_SCRIPT environment variable to the path ",
+      "of the original research implementation."
+    )
+  )
+}
+
+if (!file.exists(legacy_script)) {
+  stop(
+    "Legacy implementation file does not exist: ",
+    legacy_script
+  )
+}
+
+source(
+  file.path(
+    "dev",
+    "regression",
+    "regression_paths.R"
+  )
 )
+
+case_dir <- fixture_dir
 
 tree_file <- file.path(
   case_dir,
@@ -37,8 +59,8 @@ trait_file <- file.path(
 )
 
 output_file <- file.path(
-  case_dir,
-  "legacy_patch_4methods.csv"
+  results_dir,
+  "legacy_patch_4methods_regenerated.csv"
 )
 
 

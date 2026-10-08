@@ -22,33 +22,36 @@
 ## Settings
 ## ------------------------------------------------------------
 
-case_dir <- paste0(
-  "/home/chengyq/work/ASE/data/jump_simu/simu/",
-  "BM/balanced/jump_16/rep_001"
+source(
+  file.path(
+    "dev",
+    "regression",
+    "regression_paths.R"
+  )
 )
 
 legacy_file <- file.path(
-  case_dir,
+  fixture_dir,
   "legacy_patch_4methods.csv"
 )
 
 new_file <- file.path(
-  case_dir,
+  results_dir,
   "patchASR_patch_4methods.csv"
 )
 
 trait_file <- file.path(
-  case_dir,
+  fixture_dir,
   "node_traits.csv"
 )
 
 summary_file <- file.path(
-  case_dir,
+  results_dir,
   "legacy_vs_patchASR_4methods_summary.csv"
 )
 
 nodewise_file <- file.path(
-  case_dir,
+  results_dir,
   "legacy_vs_patchASR_4methods_nodewise.csv"
 )
 

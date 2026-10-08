@@ -59,10 +59,15 @@ pkgload::load_all(
 ## Files
 ## ------------------------------------------------------------
 
-case_dir <- paste0(
-  "/home/chengyq/work/ASE/data/jump_simu/simu/",
-  "BM/balanced/jump_16/rep_001"
+source(
+  file.path(
+    "dev",
+    "regression",
+    "regression_paths.R"
+  )
 )
+
+case_dir <- fixture_dir
 
 tree_file <- file.path(
   case_dir,
@@ -75,22 +80,22 @@ trait_file <- file.path(
 )
 
 run1_file <- file.path(
-  case_dir,
+  results_dir,
   "bayesian_validation_same_seed_run1.csv"
 )
 
 run2_file <- file.path(
-  case_dir,
+  results_dir,
   "bayesian_validation_same_seed_run2.csv"
 )
 
 different_seed_file <- file.path(
-  case_dir,
+  results_dir,
   "bayesian_validation_different_seed.csv"
 )
 
 summary_file <- file.path(
-  case_dir,
+  results_dir,
   "bayesian_validation_summary.csv"
 )
 
