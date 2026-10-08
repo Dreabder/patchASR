@@ -48,7 +48,7 @@ jobs:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
  
-    R-version-compatibility:
+  R-version-compatibility:
     runs-on: ubuntu-latest
 
     name: Ubuntu (R-${{ matrix.r }} core compatibility)
