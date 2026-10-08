@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 **Specification version:** 0.1
 
 
-**Status:** Frozen for initial package implementation
+**Status:** Implemented in the current development version
 
 ## Scope
 
@@ -29,6 +29,10 @@ patching algorithm implemented in `patchASR`.
 
 The algorithm is designed to perform ancestral-state reconstruction (ASR)
 after partitioning a phylogeny across one or more designated shift edges.
+
+`patchASR` does not detect or infer branch-localized changes. Candidate
+branches must be identified or hypothesized by the user and supplied
+explicitly to `patch_asr()`.
 
 The patching procedure is independent of any particular ancestral-state
 reconstruction method. An ASR method is supplied separately through a
@@ -297,7 +301,7 @@ Nested patch configurations are therefore not supported in the current implement
 | Internal-child shift supported?       | Yes                    |
 | Pairwise-disjoint patches supported?  | Yes                    |
 | Nested patches supported?             | No                     |
-| Same parent used by multiple shifts?  | No, initially          |
+| Same parent used by multiple shifts?  | No, in the current implementation |
 | Study-specific H/I/J labels required? | No                     |
 | Simulation truth required?            | No                     |
 | Stable method required?               | No                     |
@@ -1163,6 +1167,12 @@ The current implementation does not support:
 - non-finite terminal trait values;
 - trait vectors containing unknown or duplicated terminal identifiers.
 
+The core input validator does not impose an additional minimum
+branch-length threshold beyond requiring branch lengths to be finite and
+strictly positive. Very small positive branch lengths are therefore
+accepted by the core patching algorithm, although backend-specific or
+numerical limitations may still produce an explicit error.
+
 These restrictions define the validated input domain of the current
 implementation and may be relaxed in future versions only after the
 corresponding algorithmic behavior has been formally defined and tested.
@@ -1224,8 +1234,7 @@ fit <- patch_asr(
 )
 ```
 
-The returned object should have a dedicated S3 class, provisionally named
-`patch_asr`.
+The returned object has S3 class `patch_asr`.
 
 The object must retain sufficient information to recover the final ancestral
 states, inspect how the tree was partitioned, and audit the origin of each
@@ -1258,7 +1267,7 @@ The final table must satisfy all merge invariants defined in Section 11.
 In addition to the final ancestral-state table, the returned object should
 retain the information required to inspect and audit the patching procedure.
 
-Conceptually, the result object may contain:
+The current result object contains:
 
 ```r
 fit$ancestral_states
@@ -1267,6 +1276,7 @@ fit$boundary_states
 fit$component_states
 fit$node_map
 fit$call
+fit$diagnostics
 ```
 
 where:
@@ -1279,7 +1289,9 @@ where:
   original-tree `ape` node numbers, node type, and original labels when
   available, thereby allowing derived component nodes to be traced back to
   the original phylogeny;
-- `call` records the original function call.
+- `call` records the original function call;
+- `diagnostics` retains partition, component-ASR, boundary-reconstruction, and boundary-system diagnostic information.
+
 
 The exact internal representation may evolve during implementation, but the
 final ancestral-state estimates and their stable node identities must remain

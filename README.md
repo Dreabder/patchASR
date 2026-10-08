@@ -9,6 +9,11 @@
 continuous traits on rooted phylogenetic trees containing one or more
 specified branch-localized shifts.
 
+`patchASR` does not detect or infer branch-localized changes. Candidate
+branches must be identified or hypothesized by the user before calling
+`patch_asr()`. The package then performs patching and ancestral-state
+reconstruction for the user-specified candidate branches.
+
 The package is designed for situations in which a localized large trait
 change occurs on a particular phylogenetic branch and the downstream
 observations may influence ancestral-state reconstruction elsewhere in
@@ -159,7 +164,13 @@ shift parent may define at most one patch region.
 For multiple shifts, descendant patch-tip sets must be pairwise
 disjoint. Nested or overlapping patch regions are not currently
 supported and are rejected explicitly rather than resolved
-heuristically.
+heuristically. Candidate branches may share a more distant ancestor
+provided that their descendant patch regions remain pairwise disjoint.
+Multiple candidate branches sharing the same immediate parent are not
+supported in the current implementation. The observed trait data must be
+supplied as a named numeric vector. Its names must correspond exactly to
+`tree$tip.label`, with one finite value for every terminal taxon and no
+missing or additional taxa.
 
 ## Ancestral-state reconstruction backend
 
@@ -218,6 +229,20 @@ With the same input and base seed, repeated analyses are reproducible,
 and compatible multiple-shift analyses are invariant to the row order of
 the supplied shift table. The current `phytools::anc.Bayes()` adapter
 does not support components containing only one internal node.
+
+The built-in ASR interfaces have undergone the following software-level
+validation:
+
+| Backend       | Interface                   | Software validation                                                   |
+|---------------|-----------------------------|-----------------------------------------------------------------------|
+| PIC           | `asr_ape_pic()`             | automated tests and numerical regression                              |
+| ML-BM         | `asr_ape_ml_bm()`           | automated tests and numerical regression                              |
+| GLS-BM        | `asr_ape_gls_bm()`          | automated tests and numerical regression                              |
+| Rphylopars-BM | `make_asr_rphylopars_bm()`  | automated tests and numerical regression                              |
+| Bayesian      | `make_asr_phytools_bayes()` | automated tests, direct-adapter comparison, and reproducibility tests |
+
+These checks validate software behavior and reproducibility; they do not
+constitute general biological-performance benchmarks.
 
 ### Using the built-in backends
 
@@ -312,13 +337,35 @@ shifts <- data.frame(
 )
 ```
 
-means that the directed edge:
+This specifies the directed edge:
 
 ``` text
 9 -> 10
 ```
 
-is treated as the designated branch-localized shift.
+as the user-designated candidate branch to be patched.
+
+Multiple candidate branches are specified by adding one row per directed
+edge. For example:
+
+``` r
+shifts <- data.frame(
+  parent = c(I1_node, I2_node),
+  child = c(J1_node, J2_node)
+)
+
+fit_multiple <- patch_asr(
+  tree = tree,
+  states = states,
+  shifts = shifts,
+  asr_fun = asr_ape_ml_bm
+)
+```
+
+Thus, a one-row `shifts` table specifies single-branch patching, whereas
+a multi-row table specifies joint multiple-branch patching. Multiple
+candidate branches must satisfy the compatibility requirements described
+below.
 
 Edge-row numbers from `tree$edge` should not be used as node
 identifiers.
@@ -337,7 +384,8 @@ The main result table is:
 fit$ancestral_states
 ```
 
-and contains:
+It contains exactly one row for every internal node of the original
+input tree and includes:
 
 - stable node identifier;
 - original `ape` node number;
@@ -353,6 +401,7 @@ fit$patch_plan
 fit$boundary_states
 fit$component_states
 fit$node_map
+fit$call
 fit$diagnostics
 ```
 
