@@ -56,41 +56,24 @@ not intended as a biological ancestral-state reconstruction method.
 library(ape)
 
 tree <- read.tree(
-  text = paste0(
-    "((((A:1,B:1)J:1,C:1)I:1,D:1)H:1,",
-    "(E:1,F:1)K:1)ROOT;"
-  )
+  text = "((((A:1,B:1)J:1,C:1)I:1,D:1)H:1,(E:1,F:1)K:1)ROOT;"
 )
 
-states <- c(
-  A = 1,
-  B = 2,
-  C = 3,
-  D = 4,
-  E = 5,
-  F = 6
-)
+states <- c(A = 1, B = 2, C = 3, D = 4, E = 5, F = 6)
 
 I_node <- Ntip(tree) + match("I", tree$node.label)
 J_node <- Ntip(tree) + match("J", tree$node.label)
 
 shifts <- data.frame(
   parent = I_node,
-  child = J_node
-)
+  child = J_node)
 
 mean_backend <- function(tree, states) {
-
   stopifnot(identical(names(states), tree$tip.label))
 
   stats::setNames(
-    rep(
-      mean(states),
-      tree$Nnode
-    ),
-    tree$node.label
-  )
-}
+    rep(mean(states), tree$Nnode),
+    tree$node.label)}
 
 fit <- patch_asr(
   tree = tree,
