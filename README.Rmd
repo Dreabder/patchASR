@@ -40,29 +40,20 @@ reconstruction on the resulting components, reconstruct the boundary
 node connecting those components, and finally merge all estimates back
 onto the internal nodes of the original tree.
 
-## Development installation
+## Installation
 
-`patchASR` is currently distributed as a development version from
-GitHub.
+The manuscript-associated release of `patchASR` can be installed with:
 
-It can be installed with:
+```r
+remotes::install_github("Dreabder/patchASR@v0.1.0")
+```
+
+The current development version can be installed with:
 
 ```r
 remotes::install_github("Dreabder/patchASR")
 ```
 
-or, if `devtools` is already installed:
-
-```r
-devtools::install_github("Dreabder/patchASR")
-```
-
-For package development from a local source checkout, the working copy
-can be loaded with:
-
-```r
-devtools::load_all(".")
-```
 ## Minimal example
 
 The following example uses a simple toy ancestral-state reconstruction
@@ -435,8 +426,7 @@ be used externally as comparison or benchmark methods.
 
 ## Development status
 
-`patchASR` is currently distributed as a development version
-(`0.0.0.9000`).
+`patchASR` version `0.1.0` is the manuscript-associated public release.
 
 The package includes automated tests covering input validation, stable
 node identity, tree partitioning, component-wise reconstruction,

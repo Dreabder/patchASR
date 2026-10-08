@@ -1,0 +1,12 @@
+citHeader(
+  "To cite patchASR in publications, please use:"
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "patchASR: Patch-Based Ancestral State Reconstruction Across Branch-Localized Changes",
+  author = person("Yuqi", "Cheng"),
+  year = "2026",
+  note = "R package version 0.1.0",
+  url = "https://github.com/Dreabder/patchASR"
+)

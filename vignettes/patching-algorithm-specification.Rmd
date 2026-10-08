@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 **Specification version:** 0.1
 
 
-**Status:** Implemented in the current development version
+**Status:** Implemented in version 0.1.0
 
 ## Scope
 

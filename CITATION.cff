@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use patchASR, please cite this software."
+title: "patchASR: Patch-Based Ancestral State Reconstruction Across Branch-Localized Changes"
+type: software
+authors:
+  - family-names: "Cheng"
+    given-names: "Yuqi"
+version: "0.1.0"
+repository-code: "https://github.com/Dreabder/patchASR"
+url: "https://github.com/Dreabder/patchASR"
+license: "MIT"
