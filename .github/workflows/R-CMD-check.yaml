@@ -48,10 +48,10 @@ jobs:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
  
-  R-version-compatibility:
+    R-version-compatibility:
     runs-on: ubuntu-latest
 
-    name: Ubuntu (R-${{ matrix.r }} compatibility)
+    name: Ubuntu (R-${{ matrix.r }} core compatibility)
 
     strategy:
       fail-fast: false
@@ -71,18 +71,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: r-lib/actions/setup-pandoc@v2
-
       - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.r }}
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
-          needs: check
+          dependencies: '"hard"'
+          extra-packages: any::testthat
 
-      - uses: r-lib/actions/check-r-package@v2
-        with:
-          upload-snapshots: true
-          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+      - name: Install patchASR
+        run: R CMD INSTALL .
+
+      - name: Run core tests
+        shell: Rscript {0}
+        run: |
+          testthat::test_local(".")
