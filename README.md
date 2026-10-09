@@ -49,6 +49,7 @@ not intended as a biological ancestral-state reconstruction method.
 
 ``` r
 library(ape)
+library(patchASR)
 
 tree <- read.tree(
   text = "((((A:1,B:1)J:1,C:1)I:1,D:1)H:1,(E:1,F:1)K:1)ROOT;")
